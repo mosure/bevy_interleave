@@ -66,12 +66,20 @@ fn generate_len_method(fields_named: &FieldsNamed) -> quote::__private::TokenStr
     if let Some(first_field) = fields_named.named.first() {
         let first_field_name = first_field.ident.as_ref().unwrap();
         quote! {
+            fn is_empty(&self) -> bool {
+                self.#first_field_name.is_empty()
+            }
+
             fn len(&self) -> usize {
                 self.#first_field_name.len()
             }
         }
     } else {
         quote! {
+            fn is_empty(&self) -> bool {
+                true
+            }
+
             fn len(&self) -> usize {
                 0
             }

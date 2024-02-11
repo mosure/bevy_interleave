@@ -1,6 +1,6 @@
 [package]
 name = "bevy_interleave_macros"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "macros for e2e packed to planar bind groups"
 homepage = "https://github.com/mosure/bevy_interleave"
