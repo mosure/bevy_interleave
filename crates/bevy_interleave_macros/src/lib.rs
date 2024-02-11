@@ -33,10 +33,10 @@ fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::Token
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
             Fields::Named(ref fields) => fields,
-            _ => return Err(Error::new_spanned(&input, "Unsupported struct type")),
+            _ => return Err(Error::new_spanned(input, "Unsupported struct type")),
         }
     } else {
-        return Err(Error::new_spanned(&input, "Planar macro only supports structs"));
+        return Err(Error::new_spanned(input, "Planar macro only supports structs"));
     };
 
     let field_names = fields_struct.named.iter().map(|f| f.ident.as_ref().unwrap());
