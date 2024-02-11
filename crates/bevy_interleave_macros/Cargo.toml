@@ -1,0 +1,23 @@
+[package]
+name = "bevy_interleave_macros"
+version = "0.1.0"
+edition = "2021"
+description = "macros for e2e packed to planar bind groups"
+homepage = "https://github.com/mosure/bevy_interleave"
+repository = "https://github.com/mosure/bevy_interleave"
+license = "MIT"
+keywords = [
+  "bevy",
+  "shader-types",
+]
+
+
+[dependencies]
+bevy_interleave_interface = { path = "../bevy_interleave_interface", version = "0.1.0" }
+syn = "2.0"
+quote = "1.0"
+proc-macro2 = "1.0"
+
+
+[lib]
+proc-macro = true
