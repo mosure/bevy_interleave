@@ -31,10 +31,12 @@ members = [
 [dependencies]
 bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version = "0.1.0" }
 bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.1.0" }
+bytemuck = "1.14"
+serde = "1.0"
 
-# [dependencies.bevy]
-# version = "0.12"
-# default-features = false
+[dependencies.bevy]
+version = "0.12"
+default-features = false
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
