@@ -1,11 +1,11 @@
 pub use crate::interface::{
     GpuStoragePlanar,
-    MinBindingSize,
+    ReflectInterleaved,
     Planar,
 };
 
 pub use crate::macros::{
     StorageBindings,
-    MinBindingSize,
+    ReflectInterleaved,
     Planar,
 };

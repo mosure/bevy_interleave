@@ -37,7 +37,6 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let bind_group = generate_bind_group_method(name, fields_struct);
     let bind_group_layout = generate_bind_group_layout_method(name, fields_struct);
     let prepare = generate_prepare_method(fields_struct);
-    let ordered_field_names = generate_ordered_field_names_method(fields_struct);
 
     let expanded = quote! {
         #[derive(Debug, Clone)]
@@ -52,7 +51,6 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             #bind_group
             #bind_group_layout
             #prepare
-            #ordered_field_names
         }
     };
 
@@ -178,25 +176,6 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
             Self {
                 #(#buffer_names),*
             }
-        }
-    }
-}
-
-
-pub fn generate_ordered_field_names_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
-    let string_field_names = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            let name_str = name.to_string();
-            quote! { #name_str }
-        });
-
-    quote! {
-        fn ordered_field_names(&self) -> &'static [&'static str] {
-            &[
-                #(#string_field_names),*
-            ]
         }
     }
 }

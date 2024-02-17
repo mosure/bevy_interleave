@@ -15,8 +15,6 @@ pub trait GpuStoragePlanar {
         read_only: bool,
     ) -> bevy::render::render_resource::BindGroupLayout;
 
-    fn ordered_field_names(&self) -> &'static [&'static str];
-
     fn prepare(
         render_device: &bevy::render::renderer::RenderDevice,
         planar: &Self::PlanarType,
@@ -24,10 +22,11 @@ pub trait GpuStoragePlanar {
 }
 
 
-pub trait MinBindingSize {
+pub trait ReflectInterleaved {
     type PackedType;
 
     fn min_binding_sizes() -> &'static [usize];
+    fn ordered_field_names() -> &'static [&'static str];
 }
 
 
