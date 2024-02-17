@@ -147,7 +147,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
         .iter()
         .map(|field| {
             let name = field.ident.as_ref().unwrap();
-            let buffer_name_string = format!("{}_buffer", name.to_string());
+            let buffer_name_string = format!("{}_buffer", name);
 
             quote! {
                 let #name = render_device.create_buffer_with_data(

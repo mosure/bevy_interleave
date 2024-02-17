@@ -165,7 +165,7 @@ fn create_unique_identifier(name: &str) -> String {
     format!("{:x}", result)
 }
 
-fn format_unique_identifier_as_uuid(identifier: &String) -> String {
+fn format_unique_identifier_as_uuid(identifier: &str) -> String {
     format!(
         "{}-{}-{}-{}-{}",
         &identifier[0..8],
