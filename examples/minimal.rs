@@ -1,18 +1,22 @@
 use bevy_interleave::prelude::*;
 
 
-#[derive(Planar)]
+#[derive(
+    Planar,
+    MinBindingSize,
+    StorageBindings,
+)]
 pub struct MyStruct {
     pub field: i32,
-    pub field2: i32,
+    pub field2: u32,
 }
 
 
 fn main() {
     let interleaved = vec![
-        MyStruct { field: 0, field2: 1 },
-        MyStruct { field: 2, field2: 3 },
-        MyStruct { field: 4, field2: 5 },
+        MyStruct { field: 0, field2: 1_u32 },
+        MyStruct { field: 2, field2: 3_u32 },
+        MyStruct { field: 4, field2: 5_u32 },
     ];
 
     let planar = PlanarMyStruct::from_interleaved(interleaved);

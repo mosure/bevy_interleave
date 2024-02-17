@@ -1,2 +1,11 @@
-pub use crate::interface::Planar;
-pub use crate::macros::Planar;
+pub use crate::interface::{
+    GpuStoragePlanar,
+    MinBindingSize,
+    Planar,
+};
+
+pub use crate::macros::{
+    StorageBindings,
+    MinBindingSize,
+    Planar,
+};
