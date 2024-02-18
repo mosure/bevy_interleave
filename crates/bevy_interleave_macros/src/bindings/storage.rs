@@ -18,7 +18,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let name = &input.ident;
 
     let planar_name = Ident::new(&format!("Planar{}", name), name.span());
-    let gpu_planar_name = Ident::new(&format!("GpuPlanar{}", name), name.span());
+    let gpu_planar_name = Ident::new(&format!("PlanarStorage{}", name), name.span());
 
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
@@ -44,7 +44,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             #(pub #field_names: #field_types,)*
         }
 
-        impl GpuStoragePlanar for #gpu_planar_name {
+        impl PlanarStorage for #gpu_planar_name {
             type PackedType = #name;
             type PlanarType = #planar_name;
 
@@ -60,7 +60,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
 pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_name = format!("{}_bind_group", struct_name_snake);
+    let bind_group_name = format!("storage_{}_bind_group", struct_name_snake);
 
     let bind_group_entries = fields_named.named
         .iter()
@@ -101,7 +101,7 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
 
 pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_layout_name = format!("{}_bind_group_layout", struct_name_snake);
+    let bind_group_layout_name = format!("storage_{}_bind_group_layout", struct_name_snake);
 
     let bind_group_layout_entries = fields_named.named
         .iter()
@@ -128,12 +128,10 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
             read_only: bool,
         ) -> bevy::render::render_resource::BindGroupLayout {
             render_device.create_bind_group_layout(
-                &bevy::render::render_resource::BindGroupLayoutDescriptor {
-                    label: Some(#bind_group_layout_name),
-                    entries: &[
-                        #(#bind_group_layout_entries)*
-                    ],
-                }
+                Some(#bind_group_layout_name),
+                &[
+                    #(#bind_group_layout_entries)*
+                ],
             )
         }
     }

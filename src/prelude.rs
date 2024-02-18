@@ -1,11 +1,13 @@
 pub use crate::interface::{
-    GpuStoragePlanar,
-    ReflectInterleaved,
     Planar,
+    PlanarStorage,
+    PlanarTexture,
+    ReflectInterleaved,
 };
 
 pub use crate::macros::{
-    StorageBindings,
-    ReflectInterleaved,
     Planar,
+    ReflectInterleaved,
+    StorageBindings,
+    TextureBindings,
 };

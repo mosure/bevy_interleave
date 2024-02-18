@@ -6,6 +6,7 @@ use bevy_interleave::prelude::*;
     Planar,
     ReflectInterleaved,
     StorageBindings,
+    // TextureBindings,
 )]
 pub struct MyStruct {
     pub field: i32,

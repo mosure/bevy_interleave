@@ -1,5 +1,30 @@
+pub mod texture;
 
-pub trait GpuStoragePlanar {
+
+pub trait PlanarStorage {
+    type PackedType;
+    type PlanarType;
+
+    fn bind_group(
+        &self,
+        render_device: &bevy::render::renderer::RenderDevice,
+        layout: &bevy::render::render_resource::BindGroupLayout,
+    ) -> bevy::render::render_resource::BindGroup;
+
+    fn bind_group_layout(
+        &self,
+        render_device: &bevy::render::renderer::RenderDevice,
+        read_only: bool,
+    ) -> bevy::render::render_resource::BindGroupLayout;
+
+    fn prepare(
+        render_device: &bevy::render::renderer::RenderDevice,
+        planar: &Self::PlanarType,
+    ) -> Self;
+}
+
+
+pub trait PlanarTexture {
     type PackedType;
     type PlanarType;
 
