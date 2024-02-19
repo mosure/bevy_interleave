@@ -34,14 +34,16 @@ pub struct MyStruct {
     pub array: [u32; 4],
 }
 
-fn main() {
-    let interleaved = vec![
+fn interleaved() -> Vec<MyStruct> {
+    vec![
         MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
         MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
         MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
     ];
+}
 
-    let planar = PlanarMyStruct::from_interleaved(interleaved);
+fn main() {
+    let planar = PlanarMyStruct::from_interleaved(interleaved());
 
     println!("{:?}", planar.field);
     println!("{:?}", planar.field2);
@@ -82,13 +84,7 @@ fn setup_planar_asset(
     mut commands: Commands,
     mut planar_assets: ResMut<Assets<PlanarMyStruct>>,
 ) {
-    let interleaved = vec![
-        MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
-        MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
-        MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
-    ];
-
-    let planar = PlanarMyStruct::from_interleaved(interleaved);
+    let planar = PlanarMyStruct::from_interleaved(interleaved());
 
     commands.spawn(planar_assets.add(planar));
 }
@@ -97,6 +93,13 @@ fn check_bind_group(
     bind_group: Query<&PlanarTextureBindGroup::<PlanarTextureMyStruct>>,
 ) {
     // attach bind group to render pipeline
+    // size:
+    //     2 x 2 x bpp
+    // format:
+    //     binding: 0 - texture - R32Sint - depth 1
+    //     binding: 1 - texture - R32Uint - depth 1
+    //     binding: 2 - texture - R8Unorm - depth 1
+    //     binding: 3 - texture - Rgba32Uint - depth 1
 }
 
 ```
