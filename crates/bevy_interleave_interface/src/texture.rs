@@ -149,7 +149,7 @@ where
         let bind_group = texture_buffers.bind_group(
             &render_device,
             &gpu_images,
-            &layout,
+            layout,
         );
 
         commands.entity(entity).insert(PlanarTextureBindGroup::<R> {
