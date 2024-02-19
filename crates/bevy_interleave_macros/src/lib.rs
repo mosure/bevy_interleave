@@ -57,7 +57,7 @@ pub fn storage_bindings_macro_derive(input: TokenStream) -> TokenStream {
 
 use bindings::texture::texture_bindings;
 
-#[proc_macro_derive(TextureBindings)]
+#[proc_macro_derive(TextureBindings, attributes(texture_format))]
 pub fn texture_bindings_macro_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 

@@ -123,7 +123,6 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
 
     quote! {
         fn bind_group_layout(
-            &self,
             render_device: &bevy::render::renderer::RenderDevice,
             read_only: bool,
         ) -> bevy::render::render_resource::BindGroupLayout {

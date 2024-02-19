@@ -2,14 +2,21 @@ use convert_case::{
     Case,
     Casing,
 };
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
+    Attribute,
     Data,
     DeriveInput,
     Error,
     Fields,
     FieldsNamed,
     Ident,
+    parse::{
+        Parse,
+        ParseStream,
+    },
+    Path,
     Result,
 };
 
@@ -45,12 +52,12 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
         }
 
         impl bevy::render::extract_component::ExtractComponent for #gpu_planar_name {
-            type Query = &'static Self;
+            type QueryData = &'static Self;
 
-            type Filter = ();
+            type QueryFilter = ();
             type Out = Self;
 
-            fn extract_component(texture_buffers: bevy::ecs::query::QueryItem<'_, Self::Query>) -> Option<Self::Out> {
+            fn extract_component(texture_buffers: bevy::ecs::query::QueryItem<'_, Self::QueryData>) -> Option<Self::Out> {
                 texture_buffers.clone().into()
             }
         }
@@ -71,7 +78,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
 pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_name = format!("storage_{}_bind_group", struct_name_snake);
+    let bind_group_name = format!("texture_{}_bind_group", struct_name_snake);
 
     let bind_group_entries = fields_named.named
         .iter()
@@ -81,12 +88,8 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
             quote! {
                 bevy::render::render_resource::BindGroupEntry {
                     binding: #idx as u32,
-                    resource: bevy::render::render_resource::BindingResource::Buffer(
-                        bevy::render::render_resource::BufferBinding {
-                            buffer: &self.#name,
-                            offset: 0,
-                            size: bevy::render::render_resource::BufferSize::new(self.#name.size()),
-                        }
+                    resource: bevy::render::render_resource::BindingResource::TextureView(
+                        &gpu_images.get(&self.#name).unwrap().texture_view
                     ),
                 },
             }
@@ -96,6 +99,7 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
         fn bind_group(
             &self,
             render_device: &bevy::render::renderer::RenderDevice,
+            gpu_images: &bevy::render::render_asset::RenderAssets<bevy::render::texture::Image>,
             layout: &bevy::render::render_resource::BindGroupLayout,
         ) -> bevy::render::render_resource::BindGroup {
             render_device.create_bind_group(
@@ -134,17 +138,14 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
 
     quote! {
         fn bind_group_layout(
-            &self,
             render_device: &bevy::render::renderer::RenderDevice,
             read_only: bool,
         ) -> bevy::render::render_resource::BindGroupLayout {
             render_device.create_bind_group_layout(
-                &bevy::render::render_resource::BindGroupLayoutDescriptor {
-                    label: Some(#bind_group_layout_name),
-                    entries: &[
-                        #(#bind_group_layout_entries)*
-                    ],
-                }
+                Some(#bind_group_layout_name),
+                &[
+                    #(#bind_group_layout_entries)*
+                ],
             )
         }
     }
@@ -156,17 +157,24 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
         .iter()
         .map(|field| {
             let name = field.ident.as_ref().unwrap();
-            let buffer_name_string = format!("{}_buffer", name);
+            let format = extract_texture_format(&field.attrs);
 
             quote! {
-                let #name = render_device.create_buffer_with_data(
-                    &bevy::render::render_resource::BufferInitDescriptor {
-                        label: Some(#buffer_name_string),
-                        contents: bytemuck::cast_slice(planar.#name.as_slice()),
-                        usage: bevy::render::render_resource::BufferUsages::COPY_DST
-                             | bevy::render::render_resource::BufferUsages::STORAGE,
-                    }
+                let square = (planar.#name.len() as f32).sqrt().ceil() as u32;
+                let depth = 1;
+
+                let mut #name = bevy::render::texture::Image::new(
+                    bevy::render::render_resource::Extent3d {
+                        width: square,
+                        height: square,
+                        depth_or_array_layers: depth,
+                    },
+                    bevy::render::render_resource::TextureDimension::D2,
+                    bytemuck::cast_slice(planar.#name.as_slice()).to_vec(),
+                    #format,
+                    bevy::render::render_asset::RenderAssetUsages::default(),  // TODO: if there are no CPU image derived features, set to render only
                 );
+                let #name = images.add(#name);
             }
         });
 
@@ -179,7 +187,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
 
     quote! {
         fn prepare(
-            render_device: &bevy::render::renderer::RenderDevice,
+            images: &mut bevy::asset::Assets<bevy::render::texture::Image>,
             planar: &Self::PlanarType,
         ) -> Self {
             #(#buffers)*
@@ -189,4 +197,29 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
             }
         }
     }
+}
+
+
+struct TextureFormatAttr(Path);
+
+impl Parse for TextureFormatAttr {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let format: Path = input.parse()?;
+        Ok(TextureFormatAttr(format))
+    }
+}
+
+fn extract_texture_format(attributes: &[Attribute]) -> TokenStream {
+    for attr in attributes {
+        if attr.path().is_ident("texture_format") {
+            if let Ok(parsed) = attr.parse_args::<TextureFormatAttr>() {
+                let TextureFormatAttr(format) = parsed;
+                return quote! { #format };
+            } else {
+                panic!("error parsing texture_format attribute");
+            }
+        }
+    }
+
+    panic!("no texture_format attribute found, add `#[texture_format(Ident)]` to the field declarations");
 }
