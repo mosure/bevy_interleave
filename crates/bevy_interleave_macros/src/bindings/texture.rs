@@ -116,35 +116,57 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
 
 pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_layout_name = format!("storage_{}_bind_group_layout", struct_name_snake);
+    let bind_group_layout_name = format!("texture_{}_bind_group_layout", struct_name_snake);
 
     let bind_group_layout_entries = fields_named.named
         .iter()
         .enumerate()
-        .map(|(idx, _)| {
+        .map(|(idx, field)| {
+            let name = field.ident.as_ref().unwrap();
+
             quote! {
-                bevy::render::render_resource::BindGroupLayoutEntry {
+                // TODO: select based on texture format
+                let sample_type = bevy::render::render_resource::TextureSampleType::Float {
+                    filterable: false,
+                };
+
+                let depth = 1;  // TODO: variable depth based on type size and format
+                let view_dimension = if depth == 1 {
+                    bevy::render::render_resource::TextureViewDimension::D2
+                } else {
+                    bevy::render::render_resource::TextureViewDimension::D2Array
+                };
+
+                let #name = bevy::render::render_resource::BindGroupLayoutEntry {
                     binding: #idx as u32,
                     visibility: bevy::render::render_resource::ShaderStages::all(),
-                    ty: bevy::render::render_resource::BindingType::Buffer {
-                        ty: bevy::render::render_resource::BufferBindingType::Storage { read_only },
-                        has_dynamic_offset: false,
-                        min_binding_size: bevy::render::render_resource::BufferSize::new(Self::PackedType::min_binding_sizes()[#idx] as u64),
+                    ty: bevy::render::render_resource::BindingType::Texture {
+                        view_dimension,
+                        sample_type,
+                        multisampled: false,
                     },
                     count: None,
-                },
+                };
             }
+        });
+
+    let layout_names = fields_named.named
+        .iter()
+        .map(|field| {
+            let name = field.ident.as_ref().unwrap();
+            quote! { #name }
         });
 
     quote! {
         fn bind_group_layout(
             render_device: &bevy::render::renderer::RenderDevice,
-            read_only: bool,
         ) -> bevy::render::render_resource::BindGroupLayout {
+            #(#bind_group_layout_entries)*
+
             render_device.create_bind_group_layout(
                 Some(#bind_group_layout_name),
                 &[
-                    #(#bind_group_layout_entries)*
+                    #(#layout_names),*
                 ],
             )
         }
@@ -161,7 +183,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
 
             quote! {
                 let square = (planar.#name.len() as f32).sqrt().ceil() as u32;
-                let depth = 1;
+                let depth = 1;  // TODO: variable depth based on type size and format
 
                 let mut #name = bevy::render::texture::Image::new(
                     bevy::render::render_resource::Extent3d {

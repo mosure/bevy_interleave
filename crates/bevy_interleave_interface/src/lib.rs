@@ -36,7 +36,6 @@ pub trait PlanarTexture {
 
     fn bind_group_layout(
         render_device: &bevy::render::renderer::RenderDevice,
-        read_only: bool,
     ) -> bevy::render::render_resource::BindGroupLayout;
 
     fn prepare(
