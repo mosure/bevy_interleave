@@ -31,13 +31,9 @@ fn main() {
     app.add_plugins((
         DefaultPlugins,
         PlanarPlugin::<PlanarMyStruct>::default(),
-        PlanarTexturePlugin::<PlanarTextureMyStruct>::default()
+        PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
+        // TODO: PlanarStoragePlugin::<PlanarStorageMyStruct>::default(),
     ));
 
     app.run();
 }
-
-
-// TODO: insert test PlanarMyStruct
-// TODO: verify bind group is added
-// TODO: write as unit test mod in lib.rs

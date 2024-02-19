@@ -193,6 +193,11 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
                 let format_bpp = #format.pixel_size();
                 let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
+                let mut data = bytemuck::cast_slice(planar.#name.as_slice()).to_vec();
+
+                let padded_size = (square * square * depth * format_bpp as u32) as usize;
+                data.resize(padded_size, 0);
+
                 let mut #name = bevy::render::texture::Image::new(
                     bevy::render::render_resource::Extent3d {
                         width: square,
@@ -200,7 +205,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
                         depth_or_array_layers: depth,
                     },
                     bevy::render::render_resource::TextureDimension::D2,
-                    bytemuck::cast_slice(planar.#name.as_slice()).to_vec(),
+                    data,
                     #format,
                     bevy::render::render_asset::RenderAssetUsages::default(),  // TODO: if there are no CPU image derived features, set to render only
                 );

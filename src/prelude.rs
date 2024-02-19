@@ -9,7 +9,11 @@ pub use crate::interface::{
     PlanarStorage,
     PlanarTexture,
     planar::PlanarPlugin,
-    texture::PlanarTexturePlugin,
+    texture::{
+        PlanarTextureBindGroup,
+        PlanarTextureLayouts,
+        PlanarTexturePlugin,
+    },
     ReflectInterleaved,
 };
 

@@ -33,7 +33,7 @@ where
 
         app.add_plugins(ExtractComponentPlugin::<R>::default());
 
-        app.add_systems(Startup, prepare_textures::<R>);
+        app.add_systems(Update, prepare_textures::<R>);
 
         let render_app = app.sub_app_mut(bevy::render::RenderApp);
         render_app.add_systems(
@@ -53,6 +53,8 @@ pub struct PlanarTextureLayouts<R: PlanarTexture + Default + Component + Extract
     pub phantom: PhantomData<fn() -> R>,
 }
 
+
+// TODO: this resource needs a FromWorld implementation see: `BlitPipeline`
 fn setup_planar_texture_layouts<R>(
     mut layouts: ResMut<PlanarTextureLayouts<R>>,
     render_device: ResMut<bevy::render::renderer::RenderDevice>,
@@ -68,7 +70,6 @@ where
         layouts.bind_group_layout = Some(layout);
     }
 }
-
 
 
 fn prepare_textures<R>(
@@ -101,7 +102,7 @@ where
 
         let buffers = R::prepare(
             &mut images,
-            &cloud,
+            cloud,
         );
 
         commands.entity(entity).insert(buffers);
