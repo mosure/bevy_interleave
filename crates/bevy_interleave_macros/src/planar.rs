@@ -35,6 +35,7 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
 
     let expanded = quote! {
         #[derive(
+            bevy::asset::Asset,
             Clone,
             Debug,
             Default,

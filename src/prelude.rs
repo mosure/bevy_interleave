@@ -8,6 +8,8 @@ pub use crate::interface::{
     Planar,
     PlanarStorage,
     PlanarTexture,
+    planar::PlanarPlugin,
+    texture::PlanarTexturePlugin,
     ReflectInterleaved,
 };
 

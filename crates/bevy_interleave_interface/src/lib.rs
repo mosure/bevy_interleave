@@ -1,3 +1,4 @@
+pub mod planar;
 pub mod texture;
 
 

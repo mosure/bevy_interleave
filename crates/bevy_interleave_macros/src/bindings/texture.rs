@@ -46,7 +46,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let prepare = generate_prepare_method(fields_struct);
 
     let expanded = quote! {
-        #[derive(bevy::prelude::Component, Clone, Debug, bevy::reflect::Reflect)]
+        #[derive(bevy::prelude::Component, Default, Clone, Debug, bevy::reflect::Reflect)]
         pub struct #gpu_planar_name {
             #(pub #field_names: #field_types,)*
         }
