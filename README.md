@@ -60,6 +60,27 @@ fn main() {
     // Prints:
     // [4, 4, 1, 16]
     // ["field", "field2", "bool_field", "array"]
+
+    let mut app = App::new()
+        .add_plugins((
+            DefaultPlugins,
+            PlanarPlugin::<PlanarMyStruct>::default(),
+            PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
+        ));
+
+    app.sub_app_mut(bevy::render::RenderApp)
+        .add_systems(
+            bevy::render::Render,
+            check_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
+        );
+
+    app.run();
+}
+
+fn check_bind_group(
+    bind_group: Query<&PlanarTextureBindGroup::<PlanarTextureMyStruct>>,
+) {
+    // attach bind group to render pipeline
 }
 
 ```
