@@ -61,6 +61,7 @@ fn main() {
     // [4, 4, 1, 16]
     // ["field", "field2", "bool_field", "array"]
 
+
     let mut app = App::new()
         .add_plugins((
             DefaultPlugins,
@@ -75,6 +76,21 @@ fn main() {
         );
 
     app.run();
+}
+
+fn setup_planar_asset(
+    mut commands: Commands,
+    mut planar_assets: ResMut<Assets<PlanarMyStruct>>,
+) {
+    let interleaved = vec![
+        MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
+        MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
+        MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
+    ];
+
+    let planar = PlanarMyStruct::from_interleaved(interleaved);
+
+    commands.spawn(planar_assets.add(planar));
 }
 
 fn check_bind_group(
