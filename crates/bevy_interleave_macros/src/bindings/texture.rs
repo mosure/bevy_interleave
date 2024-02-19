@@ -135,7 +135,7 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
                 let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
                 let view_dimension = if depth == 1 {
-                    bevy::render::render_resource::TextureViewDimension::D2
+                    bevy::render::render_resource::TextureViewDimension::D2  // TODO: support 3D texture sampling
                 } else {
                     bevy::render::render_resource::TextureViewDimension::D2Array
                 };
