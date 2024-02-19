@@ -1,5 +1,8 @@
+pub mod planar;
+pub mod texture;
 
-pub trait GpuStoragePlanar {
+
+pub trait PlanarStorage {
     type PackedType;
     type PlanarType;
 
@@ -10,7 +13,6 @@ pub trait GpuStoragePlanar {
     ) -> bevy::render::render_resource::BindGroup;
 
     fn bind_group_layout(
-        &self,
         render_device: &bevy::render::renderer::RenderDevice,
         read_only: bool,
     ) -> bevy::render::render_resource::BindGroupLayout;
@@ -19,6 +21,30 @@ pub trait GpuStoragePlanar {
         render_device: &bevy::render::renderer::RenderDevice,
         planar: &Self::PlanarType,
     ) -> Self;
+}
+
+
+pub trait PlanarTexture {
+    type PackedType;
+    type PlanarType;
+
+    fn bind_group(
+        &self,
+        render_device: &bevy::render::renderer::RenderDevice,
+        gpu_images: &bevy::render::render_asset::RenderAssets<bevy::render::texture::Image>,
+        layout: &bevy::render::render_resource::BindGroupLayout,
+    ) -> bevy::render::render_resource::BindGroup;
+
+    fn bind_group_layout(
+        render_device: &bevy::render::renderer::RenderDevice,
+    ) -> bevy::render::render_resource::BindGroupLayout;
+
+    fn prepare(
+        images: &mut bevy::asset::Assets<bevy::render::texture::Image>,
+        planar: &Self::PlanarType,
+    ) -> Self;
+
+    fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::render::texture::Image>>;
 }
 
 

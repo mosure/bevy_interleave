@@ -14,10 +14,6 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
     let name = &input.ident;
     let planar_name = Ident::new(&format!("Planar{}", name), name.span());
 
-    let struct_name = input.ident.to_string();
-    let unique_identifier = create_unique_identifier(&struct_name);
-    let uuid = format_unique_identifier_as_uuid(&unique_identifier);
-
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
             Fields::Named(ref fields) => fields,
@@ -39,16 +35,15 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
 
     let expanded = quote! {
         #[derive(
+            bevy::asset::Asset,
             Clone,
             Debug,
             Default,
             PartialEq,
             bevy::reflect::Reflect,
-            bevy::reflect::TypeUuid,
             serde::Serialize,
             serde::Deserialize,
         )]
-        #[uuid = #uuid]
         pub struct #planar_name {
             #(pub #field_names: #field_types,)*
         }
@@ -154,24 +149,4 @@ pub fn generate_conversion_methods(struct_name: &Ident, fields_named: &FieldsNam
     };
 
     conversion_methods
-}
-
-
-fn create_unique_identifier(name: &str) -> String {
-    use sha1::{Sha1, Digest};
-    let mut hasher = Sha1::new();
-    hasher.update(name.as_bytes());
-    let result = hasher.finalize();
-    format!("{:x}", result)
-}
-
-fn format_unique_identifier_as_uuid(identifier: &str) -> String {
-    format!(
-        "{}-{}-{}-{}-{}",
-        &identifier[0..8],
-        &identifier[8..12],
-        &identifier[12..16],
-        &identifier[16..20],
-        &identifier[20..32]
-    )
 }

@@ -22,9 +22,9 @@ sha1 = "0.10"
 syn = "2.0"
 
 [dependencies.bevy]
-version = "0.12"
+version = "0.13"
 default-features = false
-features = ["bevy_render"]
+features = ["bevy_asset", "bevy_render"]
 
 
 [lib]
