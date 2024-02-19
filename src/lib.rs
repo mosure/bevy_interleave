@@ -73,7 +73,7 @@ mod tests {
     ) {
         *frame_count += 1;
 
-        if *frame_count > 10 {
+        if *frame_count > 5 {
             exit.send(bevy::app::AppExit);
         }
     }
@@ -91,7 +91,6 @@ mod tests {
 
             PlanarPlugin::<PlanarMyStruct>::default(),
             PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
-            // TODO: PlanarStoragePlugin::<PlanarStorageMyStruct>::default(),
         ));
 
         app.add_systems(Startup, setup_planar);

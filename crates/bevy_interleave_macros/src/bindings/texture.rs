@@ -44,6 +44,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let bind_group = generate_bind_group_method(name, fields_struct);
     let bind_group_layout = generate_bind_group_layout_method(name, fields_struct);
     let prepare = generate_prepare_method(fields_struct);
+    let get_asset_handles = generate_get_asset_handles_method(fields_struct);
 
     let expanded = quote! {
         #[derive(bevy::prelude::Component, Default, Clone, Debug, bevy::reflect::Reflect)]
@@ -69,6 +70,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             #bind_group
             #bind_group_layout
             #prepare
+            #get_asset_handles
         }
     };
 
@@ -230,6 +232,24 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
             Self {
                 #(#buffer_names),*
             }
+        }
+    }
+}
+
+
+pub fn generate_get_asset_handles_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+    let buffer_names = fields_named.named
+        .iter()
+        .map(|field| {
+            let name = field.ident.as_ref().unwrap();
+            quote! { self.#name.clone() }
+        });
+
+    quote! {
+        fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::render::texture::Image>> {
+            vec![
+                #(#buffer_names),*
+            ]
         }
     }
 }

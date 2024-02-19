@@ -40,37 +40,37 @@ where
             bevy::render::Render,
             queue_gpu_texture_buffers::<R>.in_set(bevy::render::RenderSet::PrepareAssets),
         );
+    }
 
-        render_app.init_resource::<PlanarTextureLayouts::<R>>();
-        render_app.add_systems(bevy::render::ExtractSchedule, setup_planar_texture_layouts::<R>);
+    fn finish(&self, app: &mut App) {
+        if let Ok(render_app) = app.get_sub_app_mut(bevy::render::RenderApp) {
+            render_app.init_resource::<PlanarTextureLayouts::<R>>();
+        }
     }
 }
 
 
-#[derive(bevy::prelude::Resource, Default)]
+#[derive(bevy::prelude::Resource)]
 pub struct PlanarTextureLayouts<R: PlanarTexture + Default + Component + ExtractComponent + GetTypeRegistration + Clone + Reflect> {
-    pub bind_group_layout: Option<bevy::render::render_resource::BindGroupLayout>,
+    pub bind_group_layout: bevy::render::render_resource::BindGroupLayout,
     pub phantom: PhantomData<fn() -> R>,
 }
 
+impl<R: PlanarTexture + Default + Component + ExtractComponent + GetTypeRegistration + Clone + Reflect>
+FromWorld for PlanarTextureLayouts<R> {
+    fn from_world(world: &mut World) -> Self {
+        let render_device = world.resource::<bevy::render::renderer::RenderDevice>();
 
-// TODO: this resource needs a FromWorld implementation see: `BlitPipeline`
-fn setup_planar_texture_layouts<R>(
-    mut layouts: ResMut<PlanarTextureLayouts<R>>,
-    render_device: ResMut<bevy::render::renderer::RenderDevice>,
-)
-where
-    R: PlanarTexture + Default + Component + ExtractComponent + GetTypeRegistration + Clone + Reflect,
-{
-    if layouts.bind_group_layout.is_none() {
-        let layout = R::bind_group_layout(
-            &render_device,
+        let bind_group_layout = R::bind_group_layout(
+            render_device,
         );
 
-        layouts.bind_group_layout = Some(layout);
+        PlanarTextureLayouts::<R> {
+            bind_group_layout,
+            phantom: PhantomData,
+        }
     }
 }
-
 
 fn prepare_textures<R>(
     mut commands: Commands,
@@ -122,25 +122,34 @@ fn queue_gpu_texture_buffers<R>(
     render_device: ResMut<bevy::render::renderer::RenderDevice>,
     gpu_images: Res<bevy::render::render_asset::RenderAssets<Image>>,
     bind_group_layout: Res<PlanarTextureLayouts<R>>,
-    clouds: Query<(
-        Entity,
-        &R,
-    )>,
+    clouds: Query<
+        (
+            Entity,
+            &R,
+        ),
+        Without<PlanarTextureBindGroup::<R>>,
+    >,
 )
 where
     R: PlanarTexture + Default + Component + ExtractComponent + GetTypeRegistration + Clone + Reflect,
     R::PlanarType: Asset,
 {
-    if bind_group_layout.bind_group_layout.is_none() {
-        println!("bind_group_layout is none");
-        return;
-    }
+    let layout = &bind_group_layout.bind_group_layout;
 
     for (entity, texture_buffers,) in clouds.iter() {
+        let not_ready = texture_buffers.get_asset_handles().iter()
+            .map(|handle| gpu_images.get(handle).is_none())
+            .reduce(|a, b| a || b)
+            .unwrap_or(true);
+
+        if not_ready {
+            continue;
+        }
+
         let bind_group = texture_buffers.bind_group(
             &render_device,
             &gpu_images,
-            bind_group_layout.bind_group_layout.as_ref().unwrap()
+            &layout,
         );
 
         commands.entity(entity).insert(PlanarTextureBindGroup::<R> {

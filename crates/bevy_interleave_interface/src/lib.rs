@@ -43,6 +43,8 @@ pub trait PlanarTexture {
         images: &mut bevy::asset::Assets<bevy::render::texture::Image>,
         planar: &Self::PlanarType,
     ) -> Self;
+
+    fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::render::texture::Image>>;
 }
 
 
