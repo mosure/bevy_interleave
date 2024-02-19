@@ -123,14 +123,17 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
         .enumerate()
         .map(|(idx, field)| {
             let name = field.ident.as_ref().unwrap();
+            let format = extract_texture_format(&field.attrs);
+
+            let field_type = &field.ty;
 
             quote! {
-                // TODO: select based on texture format
-                let sample_type = bevy::render::render_resource::TextureSampleType::Float {
-                    filterable: false,
-                };
+                let sample_type = #format.sample_type(None, None).unwrap();
 
-                let depth = 1;  // TODO: variable depth based on type size and format
+                let size = std::mem::size_of::<#field_type>();
+                let format_bpp = #format.pixel_size();
+                let depth = (size as f32 / format_bpp as f32).ceil() as u32;
+
                 let view_dimension = if depth == 1 {
                     bevy::render::render_resource::TextureViewDimension::D2
                 } else {
@@ -181,9 +184,14 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
             let name = field.ident.as_ref().unwrap();
             let format = extract_texture_format(&field.attrs);
 
+            let field_type = &field.ty;
+
             quote! {
                 let square = (planar.#name.len() as f32).sqrt().ceil() as u32;
-                let depth = 1;  // TODO: variable depth based on type size and format
+
+                let size = std::mem::size_of::<#field_type>();
+                let format_bpp = #format.pixel_size();
+                let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
                 let mut #name = bevy::render::texture::Image::new(
                     bevy::render::render_resource::Extent3d {

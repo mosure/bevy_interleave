@@ -1,4 +1,7 @@
-pub use bevy::render::render_resource::TextureFormat;
+pub use bevy::render::{
+    render_resource::TextureFormat,
+    texture::TextureFormatPixelInfo,
+};
 
 
 pub use crate::interface::{
