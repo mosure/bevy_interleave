@@ -15,4 +15,4 @@ keywords = [
 [dependencies.bevy]
 version = "0.13"
 default-features = false
-features = ["bevy_render"]
+features = ["bevy_asset", "bevy_render"]
