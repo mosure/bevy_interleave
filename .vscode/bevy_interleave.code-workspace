@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../crates/bevy_interleave_interface"
+		},
+		{
+			"path": "../crates/bevy_interleave_macros"
+		}
+	],
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			"./Cargo.toml"
+		]
+	}
+}
