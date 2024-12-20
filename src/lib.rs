@@ -53,7 +53,7 @@ mod tests {
 
         let planar_handle = gaussian_assets.add(planar);
 
-        commands.spawn(planar_handle);
+        commands.spawn(PlanarMyStructHandle(planar_handle));
     }
 
     #[allow(dead_code)]
@@ -74,7 +74,7 @@ mod tests {
         *frame_count += 1;
 
         if *frame_count > 5 {
-            exit.send(bevy::app::AppExit);
+            exit.send(bevy::app::AppExit::Success);
         }
     }
 
@@ -84,11 +84,10 @@ mod tests {
         let mut app = App::new();
 
         app.add_plugins((
-            DefaultPlugins,
-            bevy::app::ScheduleRunnerPlugin::run_loop(
-                std::time::Duration::from_millis(50)
-            ),
-
+            DefaultPlugins
+                .set(bevy::app::ScheduleRunnerPlugin::run_loop(
+                    std::time::Duration::from_millis(50)
+                )),
             PlanarPlugin::<PlanarMyStruct>::default(),
             PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
         ));
@@ -101,14 +100,14 @@ mod tests {
             check_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
         );
 
-        render_app.init_resource::<TestSuccess>();
-        let success = render_app.world.resource::<TestSuccess>();
-        let success = success.0.clone();
+        let success = TestSuccess(Arc::new(Mutex::new(false)));
+        let success_arc = success.0.clone();
+        render_app.insert_resource(success);
 
         app.add_systems(Update, test_timeout);
         app.run();
 
-        if !*success.lock().unwrap() {
+        if !*success_arc.lock().unwrap() {
             panic!("app exit without success flag set - bind group was not found");
         }
     }

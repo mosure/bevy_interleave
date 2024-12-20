@@ -32,7 +32,7 @@ fn main() {
         DefaultPlugins,
         PlanarPlugin::<PlanarMyStruct>::default(),
         PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
-        // TODO: PlanarStoragePlugin::<PlanarStorageMyStruct>::default(),
+        // PlanarStoragePlugin::<PlanarStorageMyStruct>::default(),
     ));
 
     app.run();

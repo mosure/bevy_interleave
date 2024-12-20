@@ -26,6 +26,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
     let planar_name = Ident::new(&format!("Planar{}", name), name.span());
     let gpu_planar_name = Ident::new(&format!("PlanarTexture{}", name), name.span());
+    let planar_handle_name = Ident::new(&format!("Planar{}Handle", name), name.span());
 
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
@@ -38,7 +39,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
     let field_names = fields_struct.named.iter().map(|f| f.ident.as_ref().unwrap());
     let field_types = fields_struct.named.iter().map(|_| {
-        quote! { bevy::asset::Handle<bevy::render::texture::Image> }
+        quote! { bevy::asset::Handle<bevy::image::Image> }
     });
 
     let bind_group = generate_bind_group_method(name, fields_struct);
@@ -66,6 +67,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
         impl PlanarTexture for #gpu_planar_name {
             type PackedType = #name;
             type PlanarType = #planar_name;
+            type PlanarTypeHandle = #planar_handle_name;
 
             #bind_group
             #bind_group_layout
@@ -101,7 +103,7 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
         fn bind_group(
             &self,
             render_device: &bevy::render::renderer::RenderDevice,
-            gpu_images: &bevy::render::render_asset::RenderAssets<bevy::render::texture::Image>,
+            gpu_images: &bevy::render::render_asset::RenderAssets<bevy::render::texture::GpuImage>,
             layout: &bevy::render::render_resource::BindGroupLayout,
         ) -> bevy::render::render_resource::BindGroup {
             render_device.create_bind_group(
@@ -200,7 +202,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
                 let padded_size = (square * square * depth * format_bpp as u32) as usize;
                 data.resize(padded_size, 0);
 
-                let mut #name = bevy::render::texture::Image::new(
+                let mut #name = bevy::image::Image::new(
                     bevy::render::render_resource::Extent3d {
                         width: square,
                         height: square,
@@ -224,7 +226,7 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
 
     quote! {
         fn prepare(
-            images: &mut bevy::asset::Assets<bevy::render::texture::Image>,
+            images: &mut bevy::asset::Assets<bevy::image::Image>,
             planar: &Self::PlanarType,
         ) -> Self {
             #(#buffers)*
@@ -246,7 +248,7 @@ pub fn generate_get_asset_handles_method(fields_named: &FieldsNamed) -> quote::_
         });
 
     quote! {
-        fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::render::texture::Image>> {
+        fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>> {
             vec![
                 #(#buffer_names),*
             ]

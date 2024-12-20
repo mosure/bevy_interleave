@@ -19,6 +19,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
     let planar_name = Ident::new(&format!("Planar{}", name), name.span());
     let gpu_planar_name = Ident::new(&format!("PlanarStorage{}", name), name.span());
+    let planar_handle_name = Ident::new(&format!("Planar{}Handle", name), name.span());
 
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
@@ -47,6 +48,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
         impl PlanarStorage for #gpu_planar_name {
             type PackedType = #name;
             type PlanarType = #planar_name;
+            type PlanarTypeHandle = #planar_handle_name;
 
             #bind_group
             #bind_group_layout

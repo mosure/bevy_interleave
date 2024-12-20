@@ -13,6 +13,7 @@ use syn::{
 pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::TokenStream> {
     let name = &input.ident;
     let planar_name = Ident::new(&format!("Planar{}", name), name.span());
+    let planar_handle_name = Ident::new(&format!("Planar{}Handle", name), name.span());
 
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
@@ -54,6 +55,15 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
             #conversion_methods
             #get_set_methods
             #len_method
+        }
+
+        #[derive(bevy::prelude::Component, Default, Clone, Debug, bevy::reflect::Reflect)]
+        pub struct #planar_handle_name(pub bevy::asset::Handle<#planar_name>);
+
+        impl bevy_interleave_interface::PlanarTextureHandle<#planar_name> for #planar_handle_name {
+            fn handle(&self) -> &bevy::asset::Handle<#planar_name> {
+                &self.0
+            }
         }
     };
 

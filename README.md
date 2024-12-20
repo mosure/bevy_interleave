@@ -43,6 +43,7 @@ fn interleaved() -> Vec<MyStruct> {
 }
 
 fn main() {
+    // TODO: add unzip implementation for Vec<MyStruct> `let planar = interleaved().unzip()`
     let planar = PlanarMyStruct::from_interleaved(interleaved());
 
     println!("{:?}", planar.field);
@@ -114,5 +115,6 @@ fn check_bind_group(
 
 | `bevy_interleave` | `bevy` |
 | :--               | :--    |
+| `0.3`             | `0.15` |
 | `0.2`             | `0.13` |
 | `0.1`             | `0.12` |
