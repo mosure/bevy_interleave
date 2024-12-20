@@ -1,6 +1,6 @@
 [package]
 name = "bevy_interleave_interface"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "interface for e2e packed to planar bind groups"
 homepage = "https://github.com/mosure/bevy_interleave"
@@ -13,6 +13,6 @@ keywords = [
 
 
 [dependencies.bevy]
-version = "0.13"
+version = "0.15"
 default-features = false
-features = ["bevy_asset", "bevy_render"]
+features = ["bevy_asset", "bevy_render", "png"]

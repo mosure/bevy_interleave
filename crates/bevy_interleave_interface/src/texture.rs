@@ -9,7 +9,10 @@ use bevy::{
     },
 };
 
-use crate::PlanarTexture;
+use crate::{
+    PlanarTexture,
+    PlanarTextureHandle,
+};
 
 
 pub struct PlanarTexturePlugin<R> {
@@ -43,7 +46,7 @@ where
     }
 
     fn finish(&self, app: &mut App) {
-        if let Ok(render_app) = app.get_sub_app_mut(bevy::render::RenderApp) {
+        if let Some(render_app) = app.get_sub_app_mut(bevy::render::RenderApp) {
             render_app.init_resource::<PlanarTextureLayouts::<R>>();
         }
     }
@@ -80,7 +83,7 @@ fn prepare_textures<R>(
     clouds: Query<
         (
             Entity,
-            &Handle<R::PlanarType>,
+            &R::PlanarTypeHandle,
         ),
         Without<R>,
     >,
@@ -90,15 +93,17 @@ where
     R::PlanarType: Asset,
 {
     for (entity, cloud_handle) in clouds.iter() {
-        if Some(bevy::asset::LoadState::Loading) == asset_server.get_load_state(cloud_handle){
+        if let Some(load_state) = asset_server.get_load_state(cloud_handle.handle()) {
+            if load_state.is_loading() {
+                continue;
+            }
+        }
+
+        if cloud_res.get(cloud_handle.handle()).is_none() {
             continue;
         }
 
-        if cloud_res.get(cloud_handle).is_none() {
-            continue;
-        }
-
-        let cloud = cloud_res.get(cloud_handle).unwrap();
+        let cloud = cloud_res.get(cloud_handle.handle()).unwrap();
 
         let buffers = R::prepare(
             &mut images,
@@ -120,7 +125,7 @@ pub struct PlanarTextureBindGroup<R: PlanarTexture + Default + Component + Extra
 fn queue_gpu_texture_buffers<R>(
     mut commands: Commands,
     render_device: ResMut<bevy::render::renderer::RenderDevice>,
-    gpu_images: Res<bevy::render::render_asset::RenderAssets<Image>>,
+    gpu_images: Res<bevy::render::render_asset::RenderAssets<bevy::render::texture::GpuImage>>,
     bind_group_layout: Res<PlanarTextureLayouts<R>>,
     clouds: Query<
         (
