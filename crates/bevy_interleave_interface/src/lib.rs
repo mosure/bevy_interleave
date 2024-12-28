@@ -7,6 +7,7 @@ pub trait PlanarHandle<T>
 where
     Self: bevy::ecs::component::Component,
     Self: bevy::render::extract_component::ExtractComponent,
+    Self: Clone,
     T: bevy::asset::Asset,
 {
     fn handle(&self) -> &bevy::asset::Handle<T>;
