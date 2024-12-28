@@ -4,6 +4,7 @@ pub use bevy::image::TextureFormatPixelInfo;
 pub use crate::interface::{
     GpuPlanarStorage,
     Planar,
+    PlanarHandle,
     PlanarStorage,
     PlanarTexture,
     storage::{
