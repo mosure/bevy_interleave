@@ -78,3 +78,7 @@ codegen-units = 1
 
 [lib]
 path = "src/lib.rs"
+
+[[test]]
+name = "lib"
+path = "test/lib.rs"

@@ -62,7 +62,7 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
         #[derive(bevy::prelude::Component, bevy::render::extract_component::ExtractComponent, Clone, Debug, Default, PartialEq, bevy::reflect::Reflect)]
         pub struct #planar_handle_name(pub bevy::asset::Handle<#planar_name>);
 
-        impl bevy_interleave_interface::PlanarHandle<#planar_name> for #planar_handle_name {
+        impl bevy_interleave::interface::PlanarHandle<#planar_name> for #planar_handle_name {
             fn handle(&self) -> &bevy::asset::Handle<#planar_name> {
                 &self.0
             }
