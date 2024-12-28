@@ -102,6 +102,10 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
                     #(#buffer_names),*
                 })
             }
+
+            fn asset_usage(_: &Self::SourceAsset) -> bevy::render::render_asset::RenderAssetUsages {
+                bevy::render::render_asset::RenderAssetUsages::default()
+            }
         }
 
         impl GpuPlanarStorage for #gpu_planar_name {
