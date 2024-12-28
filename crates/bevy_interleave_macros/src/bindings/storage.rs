@@ -111,6 +111,10 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
         impl GpuPlanarStorage for #gpu_planar_name {
             type PackedType = #name;
 
+            fn len(&self) -> usize {
+                self.count
+            }
+
             #bind_group
             #bind_group_layout
         }

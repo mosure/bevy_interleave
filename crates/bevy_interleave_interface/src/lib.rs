@@ -15,6 +15,8 @@ where
 pub trait GpuPlanarStorage {
     type PackedType;
 
+    fn len(&self) -> usize;
+
     fn bind_group(
         &self,
         render_device: &bevy::render::renderer::RenderDevice,
