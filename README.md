@@ -5,7 +5,7 @@
 [![GitHub Issues](https://img.shields.io/github/issues/mosure/bevy_interleave)](https://github.com/mosure/bevy_interleave/issues)
 [![crates.io](https://img.shields.io/crates/v/bevy_interleave.svg)](https://crates.io/crates/bevy_interleave)
 
-bevy support for e2e packed to planar bind groups
+bevy support for e2e packed to planar bind groups (e.g. statically typed meshes)
 
 
 ## minimal example
@@ -18,7 +18,6 @@ use bevy_interleave::prelude::*;
     Planar,
     ReflectInterleaved,
     StorageBindings,
-    TextureBindings,
 )]
 pub struct MyStruct {
     #[texture_format(TextureFormat::R32Sint)]

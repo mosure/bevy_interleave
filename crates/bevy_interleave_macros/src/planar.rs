@@ -33,6 +33,7 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
     let conversion_methods = generate_conversion_methods(name, fields_struct);
     let get_set_methods = generate_accessor_setter_methods(name, fields_struct);
     let len_method = generate_len_method(fields_struct);
+    let subset_method = generate_subset_method(fields_struct);
 
     let expanded = quote! {
         #[derive(
@@ -55,12 +56,13 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
             #conversion_methods
             #get_set_methods
             #len_method
+            #subset_method
         }
 
-        #[derive(bevy::prelude::Component, Default, Clone, Debug, bevy::reflect::Reflect)]
+        #[derive(bevy::prelude::Component, bevy::render::extract_component::ExtractComponent, Clone, Debug, Default, PartialEq, bevy::reflect::Reflect)]
         pub struct #planar_handle_name(pub bevy::asset::Handle<#planar_name>);
 
-        impl bevy_interleave_interface::PlanarTextureHandle<#planar_name> for #planar_handle_name {
+        impl bevy_interleave_interface::PlanarHandle<#planar_name> for #planar_handle_name {
             fn handle(&self) -> &bevy::asset::Handle<#planar_name> {
                 &self.0
             }
@@ -159,4 +161,39 @@ pub fn generate_conversion_methods(struct_name: &Ident, fields_named: &FieldsNam
     };
 
     conversion_methods
+}
+
+
+pub fn generate_subset_method(fields_named: &FieldsNamed) -> proc_macro2::TokenStream {
+    let mut new_planes_fields = Vec::new();
+    let mut push_self_index = Vec::new();
+    let mut planes = Vec::new();
+
+    for field in &fields_named.named {
+        let name = field.ident.as_ref().unwrap();
+
+        new_planes_fields.push(quote! {
+            let mut #name = Vec::with_capacity(indices.len());
+        });
+        push_self_index.push(quote! {
+            #name.push(self.#name[index]);
+        });
+        planes.push(quote! {
+            #name
+        });
+    }
+
+    quote! {
+        fn subset(&self, indices: &[usize]) -> Self {
+            #(#new_planes_fields)*
+
+            for &index in indices {
+                #(#push_self_index)*
+            }
+
+            Self {
+                #(#planes),*
+            }
+        }
+    }
 }

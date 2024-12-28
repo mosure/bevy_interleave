@@ -10,8 +10,8 @@ use bevy::{
 };
 
 use crate::{
+    PlanarHandle,
     PlanarTexture,
-    PlanarTextureHandle,
 };
 
 
@@ -74,6 +74,7 @@ FromWorld for PlanarTextureLayouts<R> {
         }
     }
 }
+
 
 fn prepare_textures<R>(
     mut commands: Commands,

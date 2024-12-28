@@ -1,11 +1,19 @@
-pub mod planar;
+pub mod storage;
 pub mod texture;
 
 
-pub trait PlanarStorage {
+// TODO: this needs to be refactored and better structured
+pub trait PlanarHandle<T>
+where
+    Self: bevy::ecs::component::Component,
+    Self: bevy::render::extract_component::ExtractComponent,
+    T: bevy::asset::Asset,
+{
+    fn handle(&self) -> &bevy::asset::Handle<T>;
+}
+
+pub trait GpuPlanarStorage {
     type PackedType;
-    type PlanarType;
-    type PlanarTypeHandle: bevy::ecs::component::Component;
 
     fn bind_group(
         &self,
@@ -17,22 +25,23 @@ pub trait PlanarStorage {
         render_device: &bevy::render::renderer::RenderDevice,
         read_only: bool,
     ) -> bevy::render::render_resource::BindGroupLayout;
+}
 
-    fn prepare(
-        render_device: &bevy::render::renderer::RenderDevice,
-        planar: &Self::PlanarType,
-    ) -> Self;
+pub trait PlanarStorage {
+    type PackedType;  // Self
+    type PlanarType: bevy::asset::Asset + bevy::reflect::GetTypeRegistration + bevy::reflect::FromReflect;
+    type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
+    type GpuPlanarType: GpuPlanarStorage + bevy::render::render_asset::RenderAsset<SourceAsset = Self::PlanarType>;
 }
 
 
-pub trait PlanarTextureHandle<T: bevy::asset::Asset>: bevy::ecs::component::Component {
-    fn handle(&self) -> &bevy::asset::Handle<T>;
-}
-
+// TODO: refactor planar texture to be more like planar storage
 pub trait PlanarTexture {
-    type PackedType;
+    type PackedType;  // Self
     type PlanarType: bevy::asset::Asset;
-    type PlanarTypeHandle: PlanarTextureHandle<Self::PlanarType>;
+    type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
+
+    // note: planar texture's gpu type utilizes bevy's image render asset
 
     fn bind_group(
         &self,
@@ -72,4 +81,6 @@ pub trait Planar {
     fn to_interleaved(&self) -> Vec<Self::PackedType>;
 
     fn from_interleaved(packed: Vec<Self::PackedType>) -> Self where Self: Sized;
+
+    fn subset(&self, indices: &[usize]) -> Self;
 }

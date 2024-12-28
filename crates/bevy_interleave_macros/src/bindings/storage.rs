@@ -37,22 +37,85 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
     let bind_group = generate_bind_group_method(name, fields_struct);
     let bind_group_layout = generate_bind_group_layout_method(name, fields_struct);
-    let prepare = generate_prepare_method(fields_struct);
+
+    let buffers = field_names
+        .clone()
+        .map(|name| {
+            let buffer_name_string = format!("{}_buffer", name);
+
+            quote! {
+                let #name = render_device.create_buffer_with_data(
+                    &bevy::render::render_resource::BufferInitDescriptor {
+                        label: Some(#buffer_name_string),
+                        contents: bytemuck::cast_slice(source.#name.as_slice()),
+                        usage: bevy::render::render_resource::BufferUsages::COPY_DST
+                             | bevy::render::render_resource::BufferUsages::STORAGE,
+                    }
+                );
+            }
+        });
+
+    let buffer_names = field_names
+        .clone()
+        .map(|name| {
+            quote! { #name }
+        });
 
     let expanded = quote! {
         #[derive(Debug, Clone)]
         pub struct #gpu_planar_name {
             #(pub #field_names: #field_types,)*
+            pub count: usize,
+            pub draw_indirect_buffer: bevy::render::render_resource::Buffer,
         }
 
-        impl PlanarStorage for #gpu_planar_name {
+        impl bevy::render::render_asset::RenderAsset for #gpu_planar_name {
+            type SourceAsset = #planar_name;
+            type Param = bevy::ecs::system::lifetimeless::SRes<bevy::render::renderer::RenderDevice>;
+
+            fn prepare_asset(
+                source: Self::SourceAsset,
+                render_device: &mut bevy::ecs::system::SystemParamItem<Self::Param>,
+            ) -> Result<Self, bevy::render::render_asset::PrepareAssetError<Self::SourceAsset>> {
+                let count = source.len();
+
+                let draw_indirect_buffer = render_device.create_buffer_with_data(&bevy::render::render_resource::BufferInitDescriptor {
+                    label: Some("draw indirect buffer"),
+                    contents: wgpu::util::DrawIndirectArgs {  // TODO: reexport this type
+                        vertex_count: 4,
+                        instance_count: count as u32,
+                        first_vertex: 0,
+                        first_instance: 0,
+                    }.as_bytes(),
+                    usage: bevy::render::render_resource::BufferUsages::INDIRECT
+                         | bevy::render::render_resource::BufferUsages::COPY_DST
+                         | bevy::render::render_resource::BufferUsages::STORAGE
+                         | bevy::render::render_resource::BufferUsages::COPY_SRC,
+                });
+
+                #(#buffers)*
+
+                Ok(Self {
+                    count,
+                    draw_indirect_buffer,
+
+                    #(#buffer_names),*
+                })
+            }
+        }
+
+        impl GpuPlanarStorage for #gpu_planar_name {
             type PackedType = #name;
-            type PlanarType = #planar_name;
-            type PlanarTypeHandle = #planar_handle_name;
 
             #bind_group
             #bind_group_layout
-            #prepare
+        }
+
+        impl PlanarStorage for #name {
+            type PackedType = #name;
+            type PlanarType = #planar_name;
+            type PlanarTypeHandle = #planar_handle_name;
+            type GpuPlanarType = #gpu_planar_name;
         }
     };
 
@@ -134,47 +197,6 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
                     #(#bind_group_layout_entries)*
                 ],
             )
-        }
-    }
-}
-
-
-pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
-    let buffers = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            let buffer_name_string = format!("{}_buffer", name);
-
-            quote! {
-                let #name = render_device.create_buffer_with_data(
-                    &bevy::render::render_resource::BufferInitDescriptor {
-                        label: Some(#buffer_name_string),
-                        contents: bytemuck::cast_slice(planar.#name.as_slice()),
-                        usage: bevy::render::render_resource::BufferUsages::COPY_DST
-                             | bevy::render::render_resource::BufferUsages::STORAGE,
-                    }
-                );
-            }
-        });
-
-    let buffer_names = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            quote! { #name }
-        });
-
-    quote! {
-        fn prepare(
-            render_device: &bevy::render::renderer::RenderDevice,
-            planar: &Self::PlanarType,
-        ) -> Self {
-            #(#buffers)*
-
-            Self {
-                #(#buffer_names),*
-            }
         }
     }
 }

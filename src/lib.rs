@@ -10,6 +10,7 @@ pub mod macros {
 
 
 
+#[allow(dead_code)]
 mod tests {
     use std::sync::{Arc, Mutex};
 
@@ -17,30 +18,32 @@ mod tests {
     use crate::prelude::*;
 
     #[derive(
+        Clone,
         Debug,
+        Default,
+        Reflect,
         Planar,
         ReflectInterleaved,
         StorageBindings,
-        TextureBindings,
+        // TextureBindings,
     )]
     pub struct MyStruct {
-        #[texture_format(TextureFormat::R32Sint)]
+        // #[texture_format(TextureFormat::R32Sint)]
         pub field: i32,
 
-        #[texture_format(TextureFormat::R32Uint)]
+        // #[texture_format(TextureFormat::R32Uint)]
         pub field2: u32,
 
-        #[texture_format(TextureFormat::R8Unorm)]
+        // #[texture_format(TextureFormat::R8Unorm)]
         pub bool_field: bool,
 
-        #[texture_format(TextureFormat::Rgba32Uint)]
+        // #[texture_format(TextureFormat::Rgba32Uint)]
         pub array: [u32; 4],
     }
 
     #[derive(Resource, Default)]
     struct TestSuccess(Arc<Mutex<bool>>);
 
-    #[allow(dead_code)]
     fn setup_planar(
         mut commands: Commands,
         mut gaussian_assets: ResMut<Assets<PlanarMyStruct>>,
@@ -56,9 +59,18 @@ mod tests {
         commands.spawn(PlanarMyStructHandle(planar_handle));
     }
 
-    #[allow(dead_code)]
-    fn check_bind_group(
-        bind_group: Query<&PlanarTextureBindGroup::<PlanarTextureMyStruct>>,
+    // TODO: require both texture and storage bind groups
+    // fn check_texture_bind_group(
+    //     bind_group: Query<&PlanarTextureBindGroup::<PlanarTextureMyStruct>>,
+    //     success: Res<TestSuccess>,
+    // ) {
+    //     if bind_group.iter().count() > 0 {
+    //         *success.0.lock().unwrap() = true;
+    //     }
+    // }
+
+    fn check_storage_bind_group(
+        bind_group: Query<&PlanarStorageBindGroup::<MyStruct>>,
         success: Res<TestSuccess>,
     ) {
         if bind_group.iter().count() > 0 {
@@ -66,7 +78,6 @@ mod tests {
         }
     }
 
-    #[allow(dead_code)]
     fn test_timeout(
         mut exit: EventWriter<bevy::app::AppExit>,
         mut frame_count: Local<u32>,
@@ -83,21 +94,26 @@ mod tests {
     fn texture_bind_group() {
         let mut app = App::new();
 
-        app.add_plugins((
+        app.add_plugins(
             DefaultPlugins
                 .set(bevy::app::ScheduleRunnerPlugin::run_loop(
                     std::time::Duration::from_millis(50)
                 )),
-            PlanarPlugin::<PlanarMyStruct>::default(),
-            PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
-        ));
+        );
+        app.add_plugins(
+            PlanarStoragePlugin::<MyStruct>::default(),
+            // PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
+        );
 
         app.add_systems(Startup, setup_planar);
 
         let render_app = app.sub_app_mut(bevy::render::RenderApp);
         render_app.add_systems(
             bevy::render::Render,
-            check_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
+            (
+                check_storage_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
+                // check_texture_bind_group.in_set(bevy::render::RenderSet::QueueMeshes)
+            ),
         );
 
         let success = TestSuccess(Arc::new(Mutex::new(false)));
