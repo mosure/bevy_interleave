@@ -32,6 +32,7 @@ where
         app.register_type::<R>();
 
         app.register_type::<R::PlanarType>();
+        app.register_type::<R::PlanarTypeHandle>();
         app.init_asset::<R::PlanarType>();
         app.register_asset_reflect::<R::PlanarType>();
 
@@ -104,20 +105,15 @@ where
 {
     let layout = &bind_group_layout.bind_group_layout;
 
-    info!("queue_gpu_storage_buffers");
-
     for (entity, planar_handle,) in clouds.iter() {
-        info!("handle {:?}", planar_handle.handle());
 
         if let Some(load_state) = asset_server.get_load_state(planar_handle.handle()) {
             if load_state.is_loading() {
-                info!("loading");
                 continue;
             }
         }
 
         if gpu_planars.get(planar_handle.handle()).is_none() {
-            info!("no gpu planar");
             continue;
         }
 

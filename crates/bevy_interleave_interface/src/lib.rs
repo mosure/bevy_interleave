@@ -8,15 +8,23 @@ where
     Self: bevy::ecs::component::Component,
     Self: bevy::render::extract_component::ExtractComponent,
     Self: Clone,
+    Self: Default,
+    Self: bevy::reflect::FromReflect,
+    Self: bevy::reflect::GetTypeRegistration,
+    Self: bevy::reflect::Reflect,
     T: bevy::asset::Asset,
 {
     fn handle(&self) -> &bevy::asset::Handle<T>;
 }
 
+// #[cfg(feature = "debug_gpu")]
+// pub debug_gpu: PlanarType,
+// TODO: when `debug_gpu` feature is enabled, add a function to access the main -> render world copied asset (for ease of test writing)
 pub trait GpuPlanarStorage {
     type PackedType;
 
     fn len(&self) -> usize;
+    fn draw_indirect_buffer(&self) -> &bevy::render::render_resource::Buffer;
 
     fn bind_group(
         &self,
@@ -30,7 +38,14 @@ pub trait GpuPlanarStorage {
     ) -> bevy::render::render_resource::BindGroupLayout;
 }
 
-pub trait PlanarStorage {
+pub trait PlanarStorage
+where
+    Self: Default,
+    Self: Send,
+    Self: Sync,
+    Self: bevy::reflect::Reflect,
+    Self: 'static,
+{
     type PackedType;  // Self
     type PlanarType: bevy::asset::Asset + bevy::reflect::GetTypeRegistration + bevy::reflect::FromReflect;
     type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
@@ -78,7 +93,9 @@ pub trait Planar {
     type PackedType;
 
     fn get(&self, index: usize) -> Self::PackedType;
-    fn is_empty(&self) -> bool;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     fn len(&self) -> usize;
     fn set(&mut self, index: usize, value: Self::PackedType);
     fn to_interleaved(&self) -> Vec<Self::PackedType>;

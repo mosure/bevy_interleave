@@ -115,6 +115,10 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
                 self.count
             }
 
+            fn draw_indirect_buffer(&self) -> &bevy::render::render_resource::Buffer {
+                return &self.draw_indirect_buffer;
+            }
+
             #bind_group
             #bind_group_layout
         }

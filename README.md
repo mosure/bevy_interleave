@@ -5,19 +5,28 @@
 [![GitHub Issues](https://img.shields.io/github/issues/mosure/bevy_interleave)](https://github.com/mosure/bevy_interleave/issues)
 [![crates.io](https://img.shields.io/crates/v/bevy_interleave.svg)](https://crates.io/crates/bevy_interleave)
 
-bevy support for e2e packed to planar bind groups (e.g. statically typed meshes)
+bevy static bind group api (e.g. statically typed meshes)
 
+
+## features
+
+- [x] storage/texture bind group automation
+- [x] packed -> planar main world representation /w serialization
+- [x] packed -> planar storage/texture GPU representation
+- [x] derive macro automation
 
 ## minimal example
 
 ```rust
 use bevy_interleave::prelude::*;
 
+
 #[derive(
     Debug,
     Planar,
     ReflectInterleaved,
     StorageBindings,
+    TextureBindings,
 )]
 pub struct MyStruct {
     #[texture_format(TextureFormat::R32Sint)]
@@ -33,17 +42,15 @@ pub struct MyStruct {
     pub array: [u32; 4],
 }
 
-fn interleaved() -> Vec<MyStruct> {
-    vec![
+
+fn main() {
+    let interleaved = vec![
         MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
         MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
         MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
     ];
-}
 
-fn main() {
-    // TODO: add unzip implementation for Vec<MyStruct> `let planar = interleaved().unzip()`
-    let planar = PlanarMyStruct::from_interleaved(interleaved());
+    let planar = PlanarMyStruct::from_interleaved(interleaved);
 
     println!("{:?}", planar.field);
     println!("{:?}", planar.field2);
@@ -62,46 +69,9 @@ fn main() {
     // Prints:
     // [4, 4, 1, 16]
     // ["field", "field2", "bool_field", "array"]
-
-
-    let mut app = App::new()
-        .add_plugins((
-            DefaultPlugins,
-            PlanarPlugin::<PlanarMyStruct>::default(),
-            PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),
-        ));
-
-    app.sub_app_mut(bevy::render::RenderApp)
-        .add_systems(
-            bevy::render::Render,
-            check_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
-        );
-
-    app.run();
 }
 
-fn setup_planar_asset(
-    mut commands: Commands,
-    mut planar_assets: ResMut<Assets<PlanarMyStruct>>,
-) {
-    let planar = PlanarMyStruct::from_interleaved(interleaved());
-
-    commands.spawn(planar_assets.add(planar));
-}
-
-fn check_bind_group(
-    bind_group: Query<&PlanarTextureBindGroup::<PlanarTextureMyStruct>>,
-) {
-    // attach bind group to render pipeline
-    // size:
-    //     2 x 2 x bpp
-    // format:
-    //     binding: 0 - texture - R32Sint - depth 1
-    //     binding: 1 - texture - R32Uint - depth 1
-    //     binding: 2 - texture - R8Unorm - depth 1
-    //     binding: 3 - texture - Rgba32Uint - depth 1
-}
-
+// TODO: gpu node binding example, see bevy_gaussian_splatting
 ```
 
 
