@@ -1,9 +1,13 @@
+use bevy::prelude::*;
 use bevy_interleave::prelude::*;
 
 
 #[derive(
+    Clone,
     Debug,
+    Default,
     Planar,
+    Reflect,
     ReflectInterleaved,
     StorageBindings,
     TextureBindings,

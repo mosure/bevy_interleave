@@ -29,8 +29,8 @@ members = [
 
 
 [dependencies]
-bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version = "0.5" }
-bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.5" }
+bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version = "0.6" }
+bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.6" }
 bytemuck = "1.21"
 serde = "1.0"
 wgpu = "23.0.1"

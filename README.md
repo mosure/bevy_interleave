@@ -18,12 +18,16 @@ bevy static bind group api (e.g. statically typed meshes)
 ## minimal example
 
 ```rust
+use bevy::prelude::*;
 use bevy_interleave::prelude::*;
 
 
 #[derive(
+    Clone,
     Debug,
+    Default,
     Planar,
+    Reflect,
     ReflectInterleaved,
     StorageBindings,
     TextureBindings,
@@ -70,6 +74,7 @@ fn main() {
     // [4, 4, 1, 16]
     // ["field", "field2", "bool_field", "array"]
 }
+
 
 // TODO: gpu node binding example, see bevy_gaussian_splatting
 ```
