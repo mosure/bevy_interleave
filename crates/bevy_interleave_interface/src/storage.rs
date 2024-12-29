@@ -3,7 +3,6 @@ use std::marker::PhantomData;
 use bevy::{
     prelude::*,
     reflect::GetTypeRegistration,
-    render::extract_component::ExtractComponentPlugin,
 };
 
 use crate::{
@@ -37,7 +36,7 @@ where
         app.register_asset_reflect::<R::PlanarType>();
 
         app.add_plugins(bevy::render::render_asset::RenderAssetPlugin::<R::GpuPlanarType>::default());
-        app.add_plugins(ExtractComponentPlugin::<R::PlanarTypeHandle>::default());
+        // app.add_plugins(ExtractComponentPlugin::<R::PlanarTypeHandle>::default());
 
         let render_app = app.sub_app_mut(bevy::render::RenderApp);
         render_app.add_systems(
@@ -93,7 +92,7 @@ fn queue_gpu_storage_buffers<R>(
     bind_group_layout: Res<PlanarStorageLayouts<R>>,
     clouds: Query<
         (
-            Entity,
+            bevy::prelude::Entity,
             &R::PlanarTypeHandle,
         ),
         Without<PlanarStorageBindGroup::<R>>,

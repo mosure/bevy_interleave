@@ -6,7 +6,6 @@ pub mod texture;
 pub trait PlanarHandle<T>
 where
     Self: bevy::ecs::component::Component,
-    Self: bevy::render::extract_component::ExtractComponent,
     Self: Clone,
     Self: Default,
     Self: bevy::reflect::FromReflect,

@@ -59,7 +59,8 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
             #subset_method
         }
 
-        #[derive(bevy::prelude::Component, bevy::render::extract_component::ExtractComponent, Clone, Debug, Default, PartialEq, bevy::reflect::Reflect)]
+        #[derive(bevy::prelude::Component, Clone, Debug, Default, PartialEq, bevy::reflect::Reflect)]
+        #[require(bevy::render::sync_world::SyncToRenderWorld, bevy::prelude::Transform, bevy::prelude::Visibility)]
         pub struct #planar_handle_name(pub bevy::asset::Handle<#planar_name>);
 
         impl bevy_interleave::interface::PlanarHandle<#planar_name> for #planar_handle_name {
