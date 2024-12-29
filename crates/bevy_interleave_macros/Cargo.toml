@@ -13,7 +13,7 @@ keywords = [
 
 
 [dependencies]
-bevy_interleave_interface = { path = "../bevy_interleave_interface", version = "0.5.1" }
+bevy_interleave_interface = { path = "../bevy_interleave_interface", version = "0.6.0" }
 bytemuck = "1.14"
 convert_case = "0.6"
 proc-macro2 = "1.0"
