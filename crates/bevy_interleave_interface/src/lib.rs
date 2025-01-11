@@ -1,8 +1,7 @@
 pub mod storage;
-pub mod texture;
+// pub mod texture;
 
 
-// TODO: this needs to be refactored and better structured
 pub trait PlanarHandle<T>
 where
     Self: bevy::ecs::component::Component,
@@ -16,13 +15,47 @@ where
     fn handle(&self) -> &bevy::asset::Handle<T>;
 }
 
+
+// TODO: migrate to PlanarSync
+pub trait PlanarSync
+where
+    Self: Default,
+    Self: Send,
+    Self: Sync,
+    Self: bevy::reflect::Reflect,
+    Self: 'static,
+{
+    type PackedType;  // Self
+    type PlanarType: Planar<PackedType = Self::PackedType>;
+    type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
+    type GpuPlanarType: GpuPlanar<
+        PackedType = Self::PackedType,
+        PlanarType = Self::PlanarType,
+    >;
+}
+
+
+pub trait GpuPlanar
+where
+    Self: bevy::render::render_asset::RenderAsset<SourceAsset = Self::PlanarType>,
+{
+    type PackedType;
+    type PlanarType;
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    fn len(&self) -> usize;
+}
+
 // #[cfg(feature = "debug_gpu")]
 // pub debug_gpu: PlanarType,
 // TODO: when `debug_gpu` feature is enabled, add a function to access the main -> render world copied asset (for ease of test writing)
-pub trait GpuPlanarStorage {
-    type PackedType;
-
-    fn len(&self) -> usize;
+pub trait GpuPlanarStorage
+where
+    Self: GpuPlanar,
+    Self: bevy::render::render_asset::RenderAsset<SourceAsset = Self::PlanarType>,
+{
     fn draw_indirect_buffer(&self) -> &bevy::render::render_resource::Buffer;
 
     fn bind_group(
@@ -37,29 +70,13 @@ pub trait GpuPlanarStorage {
     ) -> bevy::render::render_resource::BindGroupLayout;
 }
 
-pub trait PlanarStorage
+
+
+pub trait GpuPlanarTexture
 where
-    Self: Default,
-    Self: Send,
-    Self: Sync,
-    Self: bevy::reflect::Reflect,
-    Self: 'static,
+    Self: GpuPlanar,
+    Self: bevy::render::render_asset::RenderAsset<SourceAsset = Self::PlanarType>,
 {
-    type PackedType;  // Self
-    type PlanarType: bevy::asset::Asset + bevy::reflect::GetTypeRegistration + bevy::reflect::FromReflect;
-    type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
-    type GpuPlanarType: GpuPlanarStorage + bevy::render::render_asset::RenderAsset<SourceAsset = Self::PlanarType>;
-}
-
-
-// TODO: refactor planar texture to be more like planar storage
-pub trait PlanarTexture {
-    type PackedType;  // Self
-    type PlanarType: bevy::asset::Asset;
-    type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
-
-    // note: planar texture's gpu type utilizes bevy's image render asset
-
     fn bind_group(
         &self,
         render_device: &bevy::render::renderer::RenderDevice,
@@ -71,13 +88,24 @@ pub trait PlanarTexture {
         render_device: &bevy::render::renderer::RenderDevice,
     ) -> bevy::render::render_resource::BindGroupLayout;
 
+    fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>>;
+}
+
+
+// TODO: find a better name, PlanarTexture is implemented on the packed type
+pub trait PlanarTexture
+where
+    Self: PlanarSync,
+{
+    // note: planar texture's gpu type utilizes bevy's image render asset
     fn prepare(
         images: &mut bevy::asset::Assets<bevy::image::Image>,
         planar: &Self::PlanarType,
-    ) -> Self;
+    ) -> Self::GpuPlanarType;
 
     fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>>;
 }
+
 
 
 pub trait ReflectInterleaved {
@@ -88,7 +116,12 @@ pub trait ReflectInterleaved {
 }
 
 
-pub trait Planar {
+pub trait Planar
+where
+    Self: bevy::asset::Asset,
+    Self: bevy::reflect::GetTypeRegistration,
+    Self: bevy::reflect::FromReflect,
+{
     type PackedType;
 
     fn get(&self, index: usize) -> Self::PackedType;

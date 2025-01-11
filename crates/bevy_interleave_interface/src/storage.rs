@@ -8,7 +8,7 @@ use bevy::{
 use crate::{
     GpuPlanarStorage,
     PlanarHandle,
-    PlanarStorage,
+    PlanarSync,
 };
 
 
@@ -25,7 +25,8 @@ impl<R> Default for PlanarStoragePlugin<R> {
 
 impl<R: 'static> Plugin for PlanarStoragePlugin<R>
 where
-    R: PlanarStorage + Default + GetTypeRegistration + Clone + Reflect,
+    R: PlanarSync + Default + GetTypeRegistration + Clone + Reflect,
+    R::GpuPlanarType: GpuPlanarStorage,
 {
     fn build(&self, app: &mut App) {
         app.register_type::<R>();
@@ -53,14 +54,21 @@ where
 }
 
 
+// TODO: migrate to PlanarLayouts<R: PlanarSync>
 #[derive(bevy::prelude::Resource)]
-pub struct PlanarStorageLayouts<R: PlanarStorage> {
+pub struct PlanarStorageLayouts<R: PlanarSync>
+where
+    R::GpuPlanarType: GpuPlanarStorage,
+{
     pub bind_group_layout: bevy::render::render_resource::BindGroupLayout,
     pub phantom: PhantomData<fn() -> R>,
 }
 
-impl<R: PlanarStorage>
-FromWorld for PlanarStorageLayouts<R> {
+impl<R: PlanarSync>
+FromWorld for PlanarStorageLayouts<R>
+where
+    R::GpuPlanarType: GpuPlanarStorage,
+{
     fn from_world(world: &mut World) -> Self {
         let render_device = world.resource::<bevy::render::renderer::RenderDevice>();
 
@@ -78,7 +86,7 @@ FromWorld for PlanarStorageLayouts<R> {
 }
 
 #[derive(bevy::prelude::Component, Clone, Debug)]
-pub struct PlanarStorageBindGroup<R: PlanarStorage> {
+pub struct PlanarStorageBindGroup<R: PlanarSync> {
     pub bind_group: bevy::render::render_resource::BindGroup,
     pub phantom: PhantomData<fn() -> R>,
 }
@@ -99,8 +107,9 @@ fn queue_gpu_storage_buffers<R>(
     >,
 )
 where
-    R: PlanarStorage + Default + Clone + Reflect,
+    R: PlanarSync + Default + Clone + Reflect,
     R::PlanarType: Asset,
+    R::GpuPlanarType: GpuPlanarStorage,
 {
     let layout = &bind_group_layout.bind_group_layout;
 
@@ -116,7 +125,7 @@ where
             continue;
         }
 
-        let gpu_planar: &<R as PlanarStorage>::GpuPlanarType = gpu_planars.get(planar_handle.handle()).unwrap();
+        let gpu_planar: &<R as PlanarSync>::GpuPlanarType = gpu_planars.get(planar_handle.handle()).unwrap();
         let bind_group = gpu_planar.bind_group(
             &render_device,
             layout,

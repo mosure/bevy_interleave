@@ -2,21 +2,22 @@ pub use bevy::render::render_resource::TextureFormat;
 pub use bevy::image::TextureFormatPixelInfo;
 
 pub use crate::interface::{
+    GpuPlanar,
     GpuPlanarStorage,
     Planar,
     PlanarHandle,
-    PlanarStorage,
+    PlanarSync,
     PlanarTexture,
     storage::{
         PlanarStorageBindGroup,
         PlanarStorageLayouts,
         PlanarStoragePlugin,
     },
-    texture::{
-        PlanarTextureBindGroup,
-        PlanarTextureLayouts,
-        PlanarTexturePlugin,
-    },
+    // texture::{
+    //     PlanarTextureBindGroup,
+    //     PlanarTextureLayouts,
+    //     PlanarTexturePlugin,
+    // },
     ReflectInterleaved,
 };
 

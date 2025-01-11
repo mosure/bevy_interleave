@@ -47,32 +47,60 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let prepare = generate_prepare_method(fields_struct);
     let get_asset_handles = generate_get_asset_handles_method(fields_struct);
 
+    let handle_clones = field_names
+        .clone()
+        .map(|name| {
+            quote! { #name: source.#name.clone() }
+        });
+
     let expanded = quote! {
-        #[derive(bevy::prelude::Component, Default, Clone, Debug, bevy::reflect::Reflect)]
+        #[derive(Debug, Clone)]
         pub struct #gpu_planar_name {
             #(pub #field_names: #field_types,)*
         }
 
-        impl bevy::render::extract_component::ExtractComponent for #gpu_planar_name {
-            type QueryData = &'static Self;
+        impl bevy::render::render_asset::RenderAsset for #gpu_planar_name {
+            type SourceAsset = #planar_name;
+            type Param = ();
 
-            type QueryFilter = ();
-            type Out = Self;
+            fn prepare_asset(
+                source: Self::SourceAsset,
+                _: &mut bevy::ecs::system::SystemParamItem<Self::Param>,
+            ) -> Result<Self, bevy::render::render_asset::PrepareAssetError<Self::SourceAsset>> {
+                let count = source.len();
 
-            fn extract_component(texture_buffers: bevy::ecs::query::QueryItem<'_, Self::QueryData>) -> Option<Self::Out> {
-                texture_buffers.clone().into()
+                Ok(Self {
+                    count,
+
+                    #(#handle_clones),*
+                })
+            }
+
+            fn asset_usage(_: &Self::SourceAsset) -> bevy::render::render_asset::RenderAssetUsages {
+                bevy::render::render_asset::RenderAssetUsages::default()
             }
         }
 
-        impl PlanarTexture for #gpu_planar_name {
+        impl GpuPlanarTexture for #gpu_planar_name {
             type PackedType = #name;
-            type PlanarType = #planar_name;
-            type PlanarTypeHandle = #planar_handle_name;
+
+            fn len(&self) -> usize {
+                self.count
+            }
 
             #bind_group
             #bind_group_layout
-            #prepare
             #get_asset_handles
+        }
+
+        impl PlanarTexture for #name {
+            type PackedType = #name;
+            type PlanarType = #planar_name;
+            type PlanarTypeHandle = #planar_handle_name;
+            type GpuPlanarType = #gpu_planar_name;
+
+            #get_asset_handles
+            #prepare
         }
     };
 
@@ -191,13 +219,13 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
             let field_type = &field.ty;
 
             quote! {
-                let square = (planar.#name.len() as f32).sqrt().ceil() as u32;
+                let square = (self.#name.len() as f32).sqrt().ceil() as u32;
 
                 let size = std::mem::size_of::<#field_type>();
                 let format_bpp = #format.pixel_size();
                 let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
-                let mut data = bytemuck::cast_slice(planar.#name.as_slice()).to_vec();
+                let mut data = bytemuck::cast_slice(self.#name.as_slice()).to_vec();
 
                 let padded_size = (square * square * depth * format_bpp as u32) as usize;
                 data.resize(padded_size, 0);
@@ -226,8 +254,8 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
 
     quote! {
         fn prepare(
+            &self,
             images: &mut bevy::asset::Assets<bevy::image::Image>,
-            planar: &Self::PlanarType,
         ) -> Self {
             #(#buffers)*
 

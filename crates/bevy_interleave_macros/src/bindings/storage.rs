@@ -108,13 +108,16 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             }
         }
 
-        impl GpuPlanarStorage for #gpu_planar_name {
+        impl GpuPlanar for #gpu_planar_name {
             type PackedType = #name;
+            type PlanarType = #planar_name;
 
             fn len(&self) -> usize {
                 self.count
             }
+        }
 
+        impl GpuPlanarStorage for #gpu_planar_name {
             fn draw_indirect_buffer(&self) -> &bevy::render::render_resource::Buffer {
                 return &self.draw_indirect_buffer;
             }
@@ -123,7 +126,7 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             #bind_group_layout
         }
 
-        impl PlanarStorage for #name {
+        impl PlanarSync for #name {
             type PackedType = #name;
             type PlanarType = #planar_name;
             type PlanarTypeHandle = #planar_handle_name;
