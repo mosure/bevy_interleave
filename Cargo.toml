@@ -1,8 +1,8 @@
 [package]
 name = "bevy_interleave"
 description = "bevy support for e2e packed to planar bind groups"
-version = "0.6.1"
-edition = "2021"
+version = "0.7.0"
+edition = "2024"
 authors = ["mosure <mitchell@mosure.me>"]
 license = "MIT"
 keywords = [
@@ -29,14 +29,14 @@ members = [
 
 
 [dependencies]
-bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version = "0.6" }
-bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.6" }
-bytemuck = "1.21"
+bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version = "0.7" }
+bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.7" }
+bytemuck = "1.23"
 serde = "1.0"
 wgpu = "23.0.1"
 
 [dependencies.bevy]
-version = "0.15"
+version = "0.16"
 default-features = false
 features = ["bevy_asset", "bevy_render", "png"]
 

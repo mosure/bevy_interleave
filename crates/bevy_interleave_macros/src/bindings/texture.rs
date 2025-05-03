@@ -24,9 +24,9 @@ use syn::{
 pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenStream> {
     let name = &input.ident;
 
-    let planar_name = Ident::new(&format!("Planar{}", name), name.span());
-    let gpu_planar_name = Ident::new(&format!("PlanarTexture{}", name), name.span());
-    let planar_handle_name = Ident::new(&format!("Planar{}Handle", name), name.span());
+    let planar_name = Ident::new(&format!("Planar{name}"), name.span());
+    let gpu_planar_name = Ident::new(&format!("PlanarTexture{name}"), name.span());
+    let planar_handle_name = Ident::new(&format!("Planar{name}Handle"), name.span());
 
     let fields_struct = if let Data::Struct(ref data_struct) = input.data {
         match data_struct.fields {
@@ -65,6 +65,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
             fn prepare_asset(
                 source: Self::SourceAsset,
+                _: AssetId<Self::SourceAsset>,
                 _: &mut bevy::ecs::system::SystemParamItem<Self::Param>,
             ) -> Result<Self, bevy::render::render_asset::PrepareAssetError<Self::SourceAsset>> {
                 let count = source.len();
@@ -110,7 +111,7 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
 
 pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_name = format!("texture_{}_bind_group", struct_name_snake);
+    let bind_group_name = format!("texture_{struct_name_snake}_bind_group");
 
     let bind_group_entries = fields_named.named
         .iter()
@@ -148,7 +149,7 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
 
 pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
-    let bind_group_layout_name = format!("texture_{}_bind_group_layout", struct_name_snake);
+    let bind_group_layout_name = format!("texture_{struct_name_snake}_bind_group_layout");
 
     let bind_group_layout_entries = fields_named.named
         .iter()
