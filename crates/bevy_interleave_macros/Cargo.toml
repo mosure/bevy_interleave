@@ -23,9 +23,9 @@ syn = "2.0"
 wgpu = "24"
 
 [dependencies.bevy]
-version = "0.16"
+version = "0.16.0"
 default-features = false
-features = ["bevy_asset", "bevy_render", "png"]
+features = ["bevy_asset", "bevy_render", "png", "reflect_documentation", "reflect_functions"]
 
 
 [lib]
