@@ -37,9 +37,13 @@ where
         app.register_asset_reflect::<R::PlanarType>();
 
         app.add_plugins(bevy::render::render_asset::RenderAssetPlugin::<R::GpuPlanarType>::default());
-        // app.add_plugins(ExtractComponentPlugin::<R::PlanarTypeHandle>::default());
+        app.add_plugins(bevy::render::sync_component::SyncComponentPlugin::<R::PlanarTypeHandle>::default());
 
         let render_app = app.sub_app_mut(bevy::render::RenderApp);
+        render_app.add_systems(
+            bevy::render::ExtractSchedule,
+            extract_planar_handles::<R>,
+        );
         render_app.add_systems(
             bevy::render::Render,
             queue_gpu_storage_buffers::<R>.in_set(bevy::render::RenderSet::PrepareBindGroups),
@@ -89,6 +93,31 @@ where
 pub struct PlanarStorageBindGroup<R: PlanarSync> {
     pub bind_group: bevy::render::render_resource::BindGroup,
     pub phantom: PhantomData<fn() -> R>,
+}
+
+
+fn extract_planar_handles<R>(
+    mut commands: Commands,
+    mut main_world: ResMut<bevy::render::MainWorld>,
+)
+where
+    R: PlanarSync + Default + Clone + Reflect,
+    R::PlanarType: Asset,
+    R::GpuPlanarType: GpuPlanarStorage,
+{
+    let mut planar_handles_query = main_world.query::<(
+        bevy::render::sync_world::RenderEntity,
+        &R::PlanarTypeHandle,
+    )>();
+
+    for (
+        entity,
+        planar_handle
+    ) in planar_handles_query.iter(&main_world) {
+        if let Ok(mut entity_commands) = commands.get_entity(entity) {
+            entity_commands.insert(planar_handle.clone());
+        }
+    }
 }
 
 

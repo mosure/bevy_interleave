@@ -1,7 +1,11 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    winit::{WakeUp, WinitPlugin},
+};
 use bevy_interleave::prelude::*;
+
 
 #[derive(
     Clone,
@@ -30,6 +34,7 @@ pub struct MyStruct {
 #[derive(Resource, Default)]
 struct TestSuccess(Arc<Mutex<bool>>);
 
+
 fn setup_planar(
     mut commands: Commands,
     mut gaussian_assets: ResMut<Assets<PlanarMyStruct>>,
@@ -42,6 +47,7 @@ fn setup_planar(
 
     let planar_handle = gaussian_assets.add(planar);
 
+    println!("spawned planar with handle: {:?}", planar_handle.clone());
     commands.spawn(PlanarMyStructHandle(planar_handle));
 }
 
@@ -80,12 +86,16 @@ fn test_timeout(
 fn texture_bind_group() {
     let mut app = App::new();
 
-    app.add_plugins(
+    let mut winit_plugin = WinitPlugin::<WakeUp>::default();
+    winit_plugin.run_on_any_thread = true;
+
+    app.add_plugins((
         DefaultPlugins
-            .set(bevy::app::ScheduleRunnerPlugin::run_loop(
-                std::time::Duration::from_millis(50)
-            )),
-    );
+            .set(winit_plugin),
+        bevy::app::ScheduleRunnerPlugin::run_loop(
+            std::time::Duration::from_millis(50)
+        ),
+    ));
     app.add_plugins(
         PlanarStoragePlugin::<MyStruct>::default(),
         // PlanarTexturePlugin::<PlanarTextureMyStruct>::default(),

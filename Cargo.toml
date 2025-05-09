@@ -41,6 +41,19 @@ default-features = false
 features = ["bevy_asset", "bevy_render", "png", "reflect_documentation", "reflect_functions"]
 
 
+[dev-dependencies.bevy]
+version = "0.16.0"
+default-features = false
+features = [
+  "bevy_asset",
+  "bevy_render",
+  "bevy_winit",
+  "png",
+  "reflect_documentation",
+  "reflect_functions",
+]
+
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
