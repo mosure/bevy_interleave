@@ -71,7 +71,7 @@ fn test_timeout(
     *frame_count += 1;
 
     if *frame_count > 5 {
-        exit.send(bevy::app::AppExit::Success);
+        exit.write(bevy::app::AppExit::Success);
     }
 }
 
