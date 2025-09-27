@@ -71,7 +71,7 @@ fn check_storage_bind_group(
 }
 
 fn test_timeout(
-    mut exit: EventWriter<bevy::app::AppExit>,
+    mut exit: MessageWriter<bevy::app::AppExit>,
     mut frame_count: Local<u32>,
 ) {
     *frame_count += 1;
@@ -83,6 +83,7 @@ fn test_timeout(
 
 
 #[test]
+#[cfg_attr(target_os = "macos", ignore = "WinitPlugin cannot run on non-main thread on macOS")]
 fn texture_bind_group() {
     let mut app = App::new();
 
@@ -107,7 +108,7 @@ fn texture_bind_group() {
     render_app.add_systems(
         bevy::render::Render,
         (
-            check_storage_bind_group.in_set(bevy::render::RenderSet::QueueMeshes),
+            check_storage_bind_group.in_set(bevy::render::RenderSystems::QueueMeshes),
             // check_texture_bind_group.in_set(bevy::render::RenderSet::QueueMeshes)
         ),
     );
