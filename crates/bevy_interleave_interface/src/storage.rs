@@ -144,10 +144,10 @@ where
 
     for (entity, planar_handle,) in clouds.iter() {
 
-        if let Some(load_state) = asset_server.get_load_state(planar_handle.handle()) {
-            if load_state.is_loading() {
-                continue;
-            }
+        if let Some(load_state) = asset_server.get_load_state(planar_handle.handle()) 
+            && load_state.is_loading() 
+        {
+            continue;
         }
 
         if gpu_planars.get(planar_handle.handle()).is_none() {
