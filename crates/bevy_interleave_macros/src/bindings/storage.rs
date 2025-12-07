@@ -192,7 +192,8 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
             quote! {
                 bevy::render::render_resource::BindGroupLayoutEntry {
                     binding: #idx as u32,
-                    visibility: bevy::render::render_resource::ShaderStages::all(),
+                    visibility: bevy::render::render_resource::ShaderStages::VERTEX_FRAGMENT
+                        | bevy::render::render_resource::ShaderStages::COMPUTE,
                     ty: bevy::render::render_resource::BindingType::Buffer {
                         ty: bevy::render::render_resource::BufferBindingType::Storage { read_only },
                         has_dynamic_offset: false,

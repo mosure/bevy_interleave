@@ -176,7 +176,8 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
 
                 let #name = bevy::render::render_resource::BindGroupLayoutEntry {
                     binding: #idx as u32,
-                    visibility: bevy::render::render_resource::ShaderStages::all(),
+                    visibility: bevy::render::render_resource::ShaderStages::VERTEX_FRAGMENT
+                        | bevy::render::render_resource::ShaderStages::COMPUTE,
                     ty: bevy::render::render_resource::BindingType::Texture {
                         view_dimension,
                         sample_type,

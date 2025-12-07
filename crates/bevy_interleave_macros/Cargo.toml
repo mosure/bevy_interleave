@@ -1,6 +1,6 @@
 [package]
 name = "bevy_interleave_macros"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2024"
 description = "macros for e2e packed to planar bind groups"
 homepage = "https://github.com/mosure/bevy_interleave"
@@ -13,9 +13,9 @@ keywords = [
 
 
 [dependencies]
-bevy_interleave_interface = { path = "../bevy_interleave_interface", version = "0.8.0" }
+bevy_interleave_interface = { path = "../bevy_interleave_interface", version = "0.8.1" }
 bytemuck = "1.14"
-convert_case = "0.8"
+convert_case = "0.10"
 proc-macro2 = "1.0"
 quote = "1.0"
 sha1 = "0.10"
