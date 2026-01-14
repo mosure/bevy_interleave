@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::{
     prelude::*,
-    winit::{WakeUp, WinitPlugin},
+    winit::WinitPlugin,
 };
 use bevy_interleave::prelude::*;
 
@@ -87,8 +87,7 @@ fn test_timeout(
 fn texture_bind_group() {
     let mut app = App::new();
 
-    let mut winit_plugin = WinitPlugin::<WakeUp>::default();
-    winit_plugin.run_on_any_thread = true;
+    let winit_plugin = WinitPlugin { run_on_any_thread: true };
 
     app.add_plugins((
         DefaultPlugins
