@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 use bevy_interleave::prelude::*;
 
-
 #[derive(
     Clone,
     Debug,
@@ -27,14 +26,11 @@ pub struct MyStruct {
     pub array: [u32; 4],
 }
 
-
 fn main() {
     let mut app = App::new();
 
     app.add_plugins(DefaultPlugins);
-    app.add_plugins(
-        PlanarStoragePlugin::<MyStruct>::default(),
-    );
+    app.add_plugins(PlanarStoragePlugin::<MyStruct>::default());
 
     app.run();
 }

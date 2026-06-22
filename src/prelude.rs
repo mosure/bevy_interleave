@@ -1,5 +1,5 @@
-pub use bevy::render::render_resource::TextureFormat;
 pub use bevy::image::TextureFormatPixelInfo;
+pub use bevy::render::render_resource::TextureFormat;
 
 pub use crate::interface::{
     GpuPlanar,
@@ -8,22 +8,13 @@ pub use crate::interface::{
     PlanarHandle,
     PlanarSync,
     PlanarTexture,
-    storage::{
-        PlanarStorageBindGroup,
-        PlanarStorageLayouts,
-        PlanarStoragePlugin,
-    },
     // texture::{
     //     PlanarTextureBindGroup,
     //     PlanarTextureLayouts,
     //     PlanarTexturePlugin,
     // },
     ReflectInterleaved,
+    storage::{PlanarStorageBindGroup, PlanarStorageLayouts, PlanarStoragePlugin},
 };
 
-pub use crate::macros::{
-    Planar,
-    ReflectInterleaved,
-    StorageBindings,
-    TextureBindings,
-};
+pub use crate::macros::{Planar, ReflectInterleaved, StorageBindings, TextureBindings};

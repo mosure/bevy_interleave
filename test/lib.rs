@@ -1,11 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::{
-    prelude::*,
-    winit::WinitPlugin,
-};
+use bevy::{prelude::*, winit::WinitPlugin};
 use bevy_interleave::prelude::*;
-
 
 #[derive(
     Clone,
@@ -34,15 +30,26 @@ pub struct MyStruct {
 #[derive(Resource, Default)]
 struct TestSuccess(Arc<Mutex<bool>>);
 
-
-fn setup_planar(
-    mut commands: Commands,
-    mut gaussian_assets: ResMut<Assets<PlanarMyStruct>>,
-) {
+fn setup_planar(mut commands: Commands, mut gaussian_assets: ResMut<Assets<PlanarMyStruct>>) {
     let planar = PlanarMyStruct::from_interleaved(vec![
-        MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
-        MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
-        MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
+        MyStruct {
+            field: 0,
+            field2: 1_u32,
+            bool_field: true,
+            array: [0, 1, 2, 3],
+        },
+        MyStruct {
+            field: 2,
+            field2: 3_u32,
+            bool_field: false,
+            array: [4, 5, 6, 7],
+        },
+        MyStruct {
+            field: 4,
+            field2: 5_u32,
+            bool_field: true,
+            array: [8, 9, 10, 11],
+        },
     ]);
 
     let planar_handle = gaussian_assets.add(planar);
@@ -62,7 +69,7 @@ fn setup_planar(
 // }
 
 fn check_storage_bind_group(
-    bind_group: Query<&PlanarStorageBindGroup::<MyStruct>>,
+    bind_group: Query<&PlanarStorageBindGroup<MyStruct>>,
     success: Res<TestSuccess>,
 ) {
     if bind_group.iter().count() > 0 {
@@ -70,10 +77,7 @@ fn check_storage_bind_group(
     }
 }
 
-fn test_timeout(
-    mut exit: MessageWriter<bevy::app::AppExit>,
-    mut frame_count: Local<u32>,
-) {
+fn test_timeout(mut exit: MessageWriter<bevy::app::AppExit>, mut frame_count: Local<u32>) {
     *frame_count += 1;
 
     if *frame_count > 5 {
@@ -81,20 +85,21 @@ fn test_timeout(
     }
 }
 
-
 #[test]
-#[cfg_attr(target_os = "macos", ignore = "WinitPlugin cannot run on non-main thread on macOS")]
+#[cfg_attr(
+    target_os = "macos",
+    ignore = "WinitPlugin cannot run on non-main thread on macOS"
+)]
 fn texture_bind_group() {
     let mut app = App::new();
 
-    let winit_plugin = WinitPlugin { run_on_any_thread: true };
+    let winit_plugin = WinitPlugin {
+        run_on_any_thread: true,
+    };
 
     app.add_plugins((
-        DefaultPlugins
-            .set(winit_plugin),
-        bevy::app::ScheduleRunnerPlugin::run_loop(
-            std::time::Duration::from_millis(50)
-        ),
+        DefaultPlugins.set(winit_plugin),
+        bevy::app::ScheduleRunnerPlugin::run_loop(std::time::Duration::from_millis(50)),
     ));
     app.add_plugins(
         PlanarStoragePlugin::<MyStruct>::default(),

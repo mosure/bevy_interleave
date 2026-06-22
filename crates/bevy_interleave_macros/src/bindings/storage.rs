@@ -1,18 +1,6 @@
-use convert_case::{
-    Case,
-    Casing,
-};
+use convert_case::{Case, Casing};
 use quote::quote;
-use syn::{
-    Data,
-    DeriveInput,
-    Error,
-    Fields,
-    FieldsNamed,
-    Ident,
-    Result,
-};
-
+use syn::{Data, DeriveInput, Error, Fields, FieldsNamed, Ident, Result};
 
 pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenStream> {
     let name = &input.ident;
@@ -27,10 +15,16 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             _ => return Err(Error::new_spanned(input, "Unsupported struct type")),
         }
     } else {
-        return Err(Error::new_spanned(input, "Planar macro only supports structs"));
+        return Err(Error::new_spanned(
+            input,
+            "Planar macro only supports structs",
+        ));
     };
 
-    let field_names = fields_struct.named.iter().map(|f| f.ident.as_ref().unwrap());
+    let field_names = fields_struct
+        .named
+        .iter()
+        .map(|f| f.ident.as_ref().unwrap());
     let field_types = fields_struct.named.iter().map(|_| {
         quote! { bevy::render::render_resource::Buffer }
     });
@@ -38,28 +32,24 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let bind_group = generate_bind_group_method(name, fields_struct);
     let bind_group_layout = generate_bind_group_layout_method(name, fields_struct);
 
-    let buffers = field_names
-        .clone()
-        .map(|name| {
-            let buffer_name_string = format!("{name}_buffer");
+    let buffers = field_names.clone().map(|name| {
+        let buffer_name_string = format!("{name}_buffer");
 
-            quote! {
-                let #name = render_device.create_buffer_with_data(
-                    &bevy::render::render_resource::BufferInitDescriptor {
-                        label: Some(#buffer_name_string),
-                        contents: bytemuck::cast_slice(source.#name.as_slice()),
-                        usage: bevy::render::render_resource::BufferUsages::COPY_DST
-                             | bevy::render::render_resource::BufferUsages::STORAGE,
-                    }
-                );
-            }
-        });
+        quote! {
+            let #name = render_device.create_buffer_with_data(
+                &bevy::render::render_resource::BufferInitDescriptor {
+                    label: Some(#buffer_name_string),
+                    contents: bytemuck::cast_slice(source.#name.as_slice()),
+                    usage: bevy::render::render_resource::BufferUsages::COPY_DST
+                         | bevy::render::render_resource::BufferUsages::STORAGE,
+                }
+            );
+        }
+    });
 
-    let buffer_names = field_names
-        .clone()
-        .map(|name| {
-            quote! { #name }
-        });
+    let buffer_names = field_names.clone().map(|name| {
+        quote! { #name }
+    });
 
     let expanded = quote! {
         #[derive(Debug, Clone)]
@@ -139,29 +129,28 @@ pub fn storage_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     Ok(expanded)
 }
 
-
-pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+pub fn generate_bind_group_method(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
     let bind_group_name = format!("storage_{struct_name_snake}_bind_group");
 
-    let bind_group_entries = fields_named.named
-        .iter()
-        .enumerate()
-        .map(|(idx, field)| {
-            let name = field.ident.as_ref().unwrap();
-            quote! {
-                bevy::render::render_resource::BindGroupEntry {
-                    binding: #idx as u32,
-                    resource: bevy::render::render_resource::BindingResource::Buffer(
-                        bevy::render::render_resource::BufferBinding {
-                            buffer: &self.#name,
-                            offset: 0,
-                            size: bevy::render::render_resource::BufferSize::new(self.#name.size()),
-                        }
-                    ),
-                },
-            }
-        });
+    let bind_group_entries = fields_named.named.iter().enumerate().map(|(idx, field)| {
+        let name = field.ident.as_ref().unwrap();
+        quote! {
+            bevy::render::render_resource::BindGroupEntry {
+                binding: #idx as u32,
+                resource: bevy::render::render_resource::BindingResource::Buffer(
+                    bevy::render::render_resource::BufferBinding {
+                        buffer: &self.#name,
+                        offset: 0,
+                        size: bevy::render::render_resource::BufferSize::new(self.#name.size()),
+                    }
+                ),
+            },
+        }
+    });
 
     quote! {
         fn bind_group(
@@ -180,8 +169,10 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
     }
 }
 
-
-pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+pub fn generate_bind_group_layout_method(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
     let bind_group_layout_name = format!("storage_{struct_name_snake}_bind_group_layout");
 

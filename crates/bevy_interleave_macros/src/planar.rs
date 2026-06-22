@@ -1,14 +1,5 @@
 use quote::quote;
-use syn::{
-    Data,
-    DeriveInput,
-    Error,
-    Fields,
-    FieldsNamed,
-    Ident,
-    Result,
-};
-
+use syn::{Data, DeriveInput, Error, Fields, FieldsNamed, Ident, Result};
 
 pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::TokenStream> {
     let name = &input.ident;
@@ -21,10 +12,16 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
             _ => return Err(Error::new_spanned(input, "Unsupported struct type")),
         }
     } else {
-        return Err(Error::new_spanned(input, "Planar macro only supports structs"));
+        return Err(Error::new_spanned(
+            input,
+            "Planar macro only supports structs",
+        ));
     };
 
-    let field_names = fields_struct.named.iter().map(|f| f.ident.as_ref().unwrap());
+    let field_names = fields_struct
+        .named
+        .iter()
+        .map(|f| f.ident.as_ref().unwrap());
     let field_types = fields_struct.named.iter().map(|og| {
         let ty = &og.ty;
         quote! { Vec<#ty> }
@@ -68,11 +65,14 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
                 &self.0
             }
         }
+
+        impl bevy::render::sync_component::SyncComponent for #planar_handle_name {
+            type Target = Self;
+        }
     };
 
     Ok(expanded)
 }
-
 
 pub fn generate_len_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
     if let Some(first_field) = fields_named.named.first() {
@@ -99,8 +99,10 @@ pub fn generate_len_method(fields_named: &FieldsNamed) -> quote::__private::Toke
     }
 }
 
-
-pub fn generate_accessor_setter_methods(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+pub fn generate_accessor_setter_methods(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
     let packed_assignments = fields_named.named.iter().map(|field| {
         let name = field.ident.as_ref().unwrap();
         quote! { #name: self.#name[index].clone() }
@@ -124,23 +126,26 @@ pub fn generate_accessor_setter_methods(struct_name: &Ident, fields_named: &Fiel
     }
 }
 
+pub fn generate_conversion_methods(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
+    let (from_interleaved_fields, to_interleaved_fields_templates): (Vec<_>, Vec<_>) = fields_named
+        .named
+        .iter()
+        .map(|field| {
+            let name = field.ident.as_ref().unwrap();
 
-pub fn generate_conversion_methods(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
-    let (
-        from_interleaved_fields,
-        to_interleaved_fields_templates
-    ): (Vec<_>, Vec<_>) = fields_named.named.iter().map(|field| {
-        let name = field.ident.as_ref().unwrap();
+            let from_interleaved_field = quote! {
+                #name: packed.iter().map(|x| x.#name.clone()).collect()
+            };
+            let to_interleaved_field_template = quote! {
+                #name: self.#name[index].clone()
+            };
 
-        let from_interleaved_field = quote! {
-            #name: packed.iter().map(|x| x.#name.clone()).collect()
-        };
-        let to_interleaved_field_template = quote! {
-            #name: self.#name[index].clone()
-        };
-
-        (from_interleaved_field, to_interleaved_field_template)
-    }).unzip();
+            (from_interleaved_field, to_interleaved_field_template)
+        })
+        .unzip();
 
     let to_interleaved_method = quote! {
         fn to_interleaved(&self) -> Vec<#struct_name> {
@@ -163,7 +168,6 @@ pub fn generate_conversion_methods(struct_name: &Ident, fields_named: &FieldsNam
 
     conversion_methods
 }
-
 
 pub fn generate_subset_method(fields_named: &FieldsNamed) -> proc_macro2::TokenStream {
     let mut new_planes_fields = Vec::new();

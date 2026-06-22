@@ -1,25 +1,10 @@
-use convert_case::{
-    Case,
-    Casing,
-};
+use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute,
-    Data,
-    DeriveInput,
-    Error,
-    Fields,
-    FieldsNamed,
-    Ident,
-    parse::{
-        Parse,
-        ParseStream,
-    },
-    Path,
-    Result,
+    Attribute, Data, DeriveInput, Error, Fields, FieldsNamed, Ident, Path, Result,
+    parse::{Parse, ParseStream},
 };
-
 
 pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenStream> {
     let name = &input.ident;
@@ -34,10 +19,16 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
             _ => return Err(Error::new_spanned(input, "Unsupported struct type")),
         }
     } else {
-        return Err(Error::new_spanned(input, "Planar macro only supports structs"));
+        return Err(Error::new_spanned(
+            input,
+            "Planar macro only supports structs",
+        ));
     };
 
-    let field_names = fields_struct.named.iter().map(|f| f.ident.as_ref().unwrap());
+    let field_names = fields_struct
+        .named
+        .iter()
+        .map(|f| f.ident.as_ref().unwrap());
     let field_types = fields_struct.named.iter().map(|_| {
         quote! { bevy::asset::Handle<bevy::image::Image> }
     });
@@ -47,11 +38,9 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     let prepare = generate_prepare_method(fields_struct);
     let get_asset_handles = generate_get_asset_handles_method(fields_struct);
 
-    let handle_clones = field_names
-        .clone()
-        .map(|name| {
-            quote! { #name: source.#name.clone() }
-        });
+    let handle_clones = field_names.clone().map(|name| {
+        quote! { #name: source.#name.clone() }
+    });
 
     let expanded = quote! {
         #[derive(Debug, Clone)]
@@ -109,25 +98,24 @@ pub fn texture_bindings(input: &DeriveInput) -> Result<quote::__private::TokenSt
     Ok(expanded)
 }
 
-
-pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+pub fn generate_bind_group_method(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
     let bind_group_name = format!("texture_{struct_name_snake}_bind_group");
 
-    let bind_group_entries = fields_named.named
-        .iter()
-        .enumerate()
-        .map(|(idx, field)| {
-            let name = field.ident.as_ref().unwrap();
-            quote! {
-                bevy::render::render_resource::BindGroupEntry {
-                    binding: #idx as u32,
-                    resource: bevy::render::render_resource::BindingResource::TextureView(
-                        &gpu_images.get(&self.#name).unwrap().texture_view
-                    ),
-                },
-            }
-        });
+    let bind_group_entries = fields_named.named.iter().enumerate().map(|(idx, field)| {
+        let name = field.ident.as_ref().unwrap();
+        quote! {
+            bevy::render::render_resource::BindGroupEntry {
+                binding: #idx as u32,
+                resource: bevy::render::render_resource::BindingResource::TextureView(
+                    &gpu_images.get(&self.#name).unwrap().texture_view
+                ),
+            },
+        }
+    });
 
     quote! {
         fn bind_group(
@@ -147,53 +135,50 @@ pub fn generate_bind_group_method(struct_name: &Ident, fields_named: &FieldsName
     }
 }
 
-
-pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &FieldsNamed) -> quote::__private::TokenStream {
+pub fn generate_bind_group_layout_method(
+    struct_name: &Ident,
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
     let struct_name_snake = struct_name.to_string().to_case(Case::Snake);
     let bind_group_layout_name = format!("texture_{struct_name_snake}_bind_group_layout");
 
-    let bind_group_layout_entries = fields_named.named
-        .iter()
-        .enumerate()
-        .map(|(idx, field)| {
-            let name = field.ident.as_ref().unwrap();
-            let format = extract_texture_format(&field.attrs);
+    let bind_group_layout_entries = fields_named.named.iter().enumerate().map(|(idx, field)| {
+        let name = field.ident.as_ref().unwrap();
+        let format = extract_texture_format(&field.attrs);
 
-            let field_type = &field.ty;
+        let field_type = &field.ty;
 
-            quote! {
-                let sample_type = #format.sample_type(None, None).unwrap();
+        quote! {
+            let sample_type = #format.sample_type(None, None).unwrap();
 
-                let size = std::mem::size_of::<#field_type>();
-                let format_bpp = #format.pixel_size();
-                let depth = (size as f32 / format_bpp as f32).ceil() as u32;
+            let size = std::mem::size_of::<#field_type>();
+            let format_bpp = #format.pixel_size();
+            let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
-                let view_dimension = if depth == 1 {
-                    bevy::render::render_resource::TextureViewDimension::D2  // TODO: support 3D texture sampling
-                } else {
-                    bevy::render::render_resource::TextureViewDimension::D2Array
-                };
+            let view_dimension = if depth == 1 {
+                bevy::render::render_resource::TextureViewDimension::D2  // TODO: support 3D texture sampling
+            } else {
+                bevy::render::render_resource::TextureViewDimension::D2Array
+            };
 
-                let #name = bevy::render::render_resource::BindGroupLayoutEntry {
-                    binding: #idx as u32,
-                    visibility: bevy::render::render_resource::ShaderStages::VERTEX_FRAGMENT
-                        | bevy::render::render_resource::ShaderStages::COMPUTE,
-                    ty: bevy::render::render_resource::BindingType::Texture {
-                        view_dimension,
-                        sample_type,
-                        multisampled: false,
-                    },
-                    count: None,
-                };
-            }
-        });
+            let #name = bevy::render::render_resource::BindGroupLayoutEntry {
+                binding: #idx as u32,
+                visibility: bevy::render::render_resource::ShaderStages::VERTEX_FRAGMENT
+                    | bevy::render::render_resource::ShaderStages::COMPUTE,
+                ty: bevy::render::render_resource::BindingType::Texture {
+                    view_dimension,
+                    sample_type,
+                    multisampled: false,
+                },
+                count: None,
+            };
+        }
+    });
 
-    let layout_names = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            quote! { #name }
-        });
+    let layout_names = fields_named.named.iter().map(|field| {
+        let name = field.ident.as_ref().unwrap();
+        quote! { #name }
+    });
 
     quote! {
         fn bind_group_layout(
@@ -211,49 +196,44 @@ pub fn generate_bind_group_layout_method(struct_name: &Ident, fields_named: &Fie
     }
 }
 
-
 pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
-    let buffers = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            let format = extract_texture_format(&field.attrs);
+    let buffers = fields_named.named.iter().map(|field| {
+        let name = field.ident.as_ref().unwrap();
+        let format = extract_texture_format(&field.attrs);
 
-            let field_type = &field.ty;
+        let field_type = &field.ty;
 
-            quote! {
-                let square = (self.#name.len() as f32).sqrt().ceil() as u32;
+        quote! {
+            let square = (self.#name.len() as f32).sqrt().ceil() as u32;
 
-                let size = std::mem::size_of::<#field_type>();
-                let format_bpp = #format.pixel_size();
-                let depth = (size as f32 / format_bpp as f32).ceil() as u32;
+            let size = std::mem::size_of::<#field_type>();
+            let format_bpp = #format.pixel_size();
+            let depth = (size as f32 / format_bpp as f32).ceil() as u32;
 
-                let mut data = bytemuck::cast_slice(self.#name.as_slice()).to_vec();
+            let mut data = bytemuck::cast_slice(self.#name.as_slice()).to_vec();
 
-                let padded_size = (square * square * depth * format_bpp as u32) as usize;
-                data.resize(padded_size, 0);
+            let padded_size = (square * square * depth * format_bpp as u32) as usize;
+            data.resize(padded_size, 0);
 
-                let mut #name = bevy::image::Image::new(
-                    bevy::render::render_resource::Extent3d {
-                        width: square,
-                        height: square,
-                        depth_or_array_layers: depth,
-                    },
-                    bevy::render::render_resource::TextureDimension::D2,
-                    data,
-                    #format,
-                    bevy::render::render_asset::RenderAssetUsages::default(),  // TODO: if there are no CPU image derived features, set to render only
-                );
-                let #name = images.add(#name);
-            }
-        });
+            let mut #name = bevy::image::Image::new(
+                bevy::render::render_resource::Extent3d {
+                    width: square,
+                    height: square,
+                    depth_or_array_layers: depth,
+                },
+                bevy::render::render_resource::TextureDimension::D2,
+                data,
+                #format,
+                bevy::render::render_asset::RenderAssetUsages::default(),  // TODO: if there are no CPU image derived features, set to render only
+            );
+            let #name = images.add(#name);
+        }
+    });
 
-    let buffer_names = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            quote! { #name }
-        });
+    let buffer_names = fields_named.named.iter().map(|field| {
+        let name = field.ident.as_ref().unwrap();
+        quote! { #name }
+    });
 
     quote! {
         fn prepare(
@@ -269,14 +249,13 @@ pub fn generate_prepare_method(fields_named: &FieldsNamed) -> quote::__private::
     }
 }
 
-
-pub fn generate_get_asset_handles_method(fields_named: &FieldsNamed) -> quote::__private::TokenStream {
-    let buffer_names = fields_named.named
-        .iter()
-        .map(|field| {
-            let name = field.ident.as_ref().unwrap();
-            quote! { self.#name.clone() }
-        });
+pub fn generate_get_asset_handles_method(
+    fields_named: &FieldsNamed,
+) -> quote::__private::TokenStream {
+    let buffer_names = fields_named.named.iter().map(|field| {
+        let name = field.ident.as_ref().unwrap();
+        quote! { self.#name.clone() }
+    });
 
     quote! {
         fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>> {
@@ -286,7 +265,6 @@ pub fn generate_get_asset_handles_method(fields_named: &FieldsNamed) -> quote::_
         }
     }
 }
-
 
 struct TextureFormatAttr(Path);
 
@@ -309,5 +287,7 @@ fn extract_texture_format(attributes: &[Attribute]) -> TokenStream {
         }
     }
 
-    panic!("no texture_format attribute found, add `#[texture_format(Ident)]` to the field declarations");
+    panic!(
+        "no texture_format attribute found, add `#[texture_format(Ident)]` to the field declarations"
+    );
 }
