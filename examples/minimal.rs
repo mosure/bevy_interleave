@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy_interleave::prelude::*;
 
-
 #[derive(
     Clone,
     Debug,
@@ -26,12 +25,26 @@ pub struct MyStruct {
     pub array: [u32; 4],
 }
 
-
 fn main() {
     let interleaved = vec![
-        MyStruct { field: 0, field2: 1_u32, bool_field: true, array: [0, 1, 2, 3] },
-        MyStruct { field: 2, field2: 3_u32, bool_field: false, array: [4, 5, 6, 7] },
-        MyStruct { field: 4, field2: 5_u32, bool_field: true, array: [8, 9, 10, 11] },
+        MyStruct {
+            field: 0,
+            field2: 1_u32,
+            bool_field: true,
+            array: [0, 1, 2, 3],
+        },
+        MyStruct {
+            field: 2,
+            field2: 3_u32,
+            bool_field: false,
+            array: [4, 5, 6, 7],
+        },
+        MyStruct {
+            field: 4,
+            field2: 5_u32,
+            bool_field: true,
+            array: [8, 9, 10, 11],
+        },
     ];
 
     let planar = PlanarMyStruct::from_interleaved(interleaved);

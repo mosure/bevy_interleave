@@ -1,16 +1,8 @@
 use std::marker::PhantomData;
 
-use bevy::{
-    prelude::*,
-    reflect::GetTypeRegistration,
-};
+use bevy::{prelude::*, reflect::GetTypeRegistration};
 
-use crate::{
-    GpuPlanarStorage,
-    PlanarHandle,
-    PlanarSync,
-};
-
+use crate::{GpuPlanarStorage, PlanarHandle, PlanarSync};
 
 pub struct PlanarStoragePlugin<R> {
     phantom: PhantomData<fn() -> R>,
@@ -36,14 +28,15 @@ where
         app.init_asset::<R::PlanarType>();
         app.register_asset_reflect::<R::PlanarType>();
 
-        app.add_plugins(bevy::render::render_asset::RenderAssetPlugin::<R::GpuPlanarType>::default());
-        app.add_plugins(bevy::render::sync_component::SyncComponentPlugin::<R::PlanarTypeHandle>::default());
+        app.add_plugins(bevy::render::render_asset::RenderAssetPlugin::<
+            R::GpuPlanarType,
+        >::default());
+        app.add_plugins(bevy::render::sync_component::SyncComponentPlugin::<
+            R::PlanarTypeHandle,
+        >::default());
 
         let render_app = app.sub_app_mut(bevy::render::RenderApp);
-        render_app.add_systems(
-            bevy::render::ExtractSchedule,
-            extract_planar_handles::<R>,
-        );
+        render_app.add_systems(bevy::render::ExtractSchedule, extract_planar_handles::<R>);
         render_app.add_systems(
             bevy::render::Render,
             queue_gpu_storage_buffers::<R>.in_set(bevy::render::RenderSystems::PrepareBindGroups),
@@ -52,11 +45,10 @@ where
 
     fn finish(&self, app: &mut App) {
         if let Some(render_app) = app.get_sub_app_mut(bevy::render::RenderApp) {
-            render_app.init_resource::<PlanarStorageLayouts::<R>>();
+            render_app.init_resource::<PlanarStorageLayouts<R>>();
         }
     }
 }
-
 
 // TODO: migrate to PlanarLayouts<R: PlanarSync>
 #[derive(bevy::prelude::Resource)]
@@ -68,8 +60,7 @@ where
     pub phantom: PhantomData<fn() -> R>,
 }
 
-impl<R: PlanarSync>
-FromWorld for PlanarStorageLayouts<R>
+impl<R: PlanarSync> FromWorld for PlanarStorageLayouts<R>
 where
     R::GpuPlanarType: GpuPlanarStorage,
 {
@@ -77,10 +68,7 @@ where
         let render_device = world.resource::<bevy::render::renderer::RenderDevice>();
 
         let read_only = true;
-        let bind_group_layout = R::GpuPlanarType::bind_group_layout(
-            render_device,
-            read_only,
-        );
+        let bind_group_layout = R::GpuPlanarType::bind_group_layout(render_device, read_only);
 
         Self {
             bind_group_layout,
@@ -95,31 +83,23 @@ pub struct PlanarStorageBindGroup<R: PlanarSync> {
     pub phantom: PhantomData<fn() -> R>,
 }
 
-
 fn extract_planar_handles<R>(
     mut commands: Commands,
     mut main_world: ResMut<bevy::render::MainWorld>,
-)
-where
+) where
     R: PlanarSync + Default + Clone + Reflect,
     R::PlanarType: Asset,
     R::GpuPlanarType: GpuPlanarStorage,
 {
-    let mut planar_handles_query = main_world.query::<(
-        bevy::render::sync_world::RenderEntity,
-        &R::PlanarTypeHandle,
-    )>();
+    let mut planar_handles_query =
+        main_world.query::<(bevy::render::sync_world::RenderEntity, &R::PlanarTypeHandle)>();
 
-    for (
-        entity,
-        planar_handle
-    ) in planar_handles_query.iter(&main_world) {
+    for (entity, planar_handle) in planar_handles_query.iter(&main_world) {
         if let Ok(mut entity_commands) = commands.get_entity(entity) {
             entity_commands.insert(planar_handle.clone());
         }
     }
 }
-
 
 fn queue_gpu_storage_buffers<R>(
     mut commands: Commands,
@@ -128,24 +108,19 @@ fn queue_gpu_storage_buffers<R>(
     gpu_planars: Res<bevy::render::render_asset::RenderAssets<R::GpuPlanarType>>,
     bind_group_layout: Res<PlanarStorageLayouts<R>>,
     clouds: Query<
-        (
-            bevy::prelude::Entity,
-            &R::PlanarTypeHandle,
-        ),
-        Without<PlanarStorageBindGroup::<R>>,
+        (bevy::prelude::Entity, &R::PlanarTypeHandle),
+        Without<PlanarStorageBindGroup<R>>,
     >,
-)
-where
+) where
     R: PlanarSync + Default + Clone + Reflect,
     R::PlanarType: Asset,
     R::GpuPlanarType: GpuPlanarStorage,
 {
     let layout = &bind_group_layout.bind_group_layout;
 
-    for (entity, planar_handle,) in clouds.iter() {
-
-        if let Some(load_state) = asset_server.get_load_state(planar_handle.handle()) 
-            && load_state.is_loading() 
+    for (entity, planar_handle) in clouds.iter() {
+        if let Some(load_state) = asset_server.get_load_state(planar_handle.handle())
+            && load_state.is_loading()
         {
             continue;
         }
@@ -154,11 +129,9 @@ where
             continue;
         }
 
-        let gpu_planar: &<R as PlanarSync>::GpuPlanarType = gpu_planars.get(planar_handle.handle()).unwrap();
-        let bind_group = gpu_planar.bind_group(
-            &render_device,
-            layout,
-        );
+        let gpu_planar: &<R as PlanarSync>::GpuPlanarType =
+            gpu_planars.get(planar_handle.handle()).unwrap();
+        let bind_group = gpu_planar.bind_group(&render_device, layout);
 
         commands.entity(entity).insert(PlanarStorageBindGroup::<R> {
             bind_group,

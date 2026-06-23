@@ -1,7 +1,6 @@
 pub mod storage;
 // pub mod texture;
 
-
 pub trait PlanarHandle<T>
 where
     Self: bevy::ecs::component::Component,
@@ -10,11 +9,11 @@ where
     Self: bevy::reflect::FromReflect,
     Self: bevy::reflect::GetTypeRegistration,
     Self: bevy::reflect::Reflect,
+    Self: bevy::render::sync_component::SyncComponent,
     T: bevy::asset::Asset,
 {
     fn handle(&self) -> &bevy::asset::Handle<T>;
 }
-
 
 // TODO: migrate to PlanarSync
 pub trait PlanarSync
@@ -25,15 +24,11 @@ where
     Self: bevy::reflect::Reflect,
     Self: 'static,
 {
-    type PackedType;  // Self
+    type PackedType; // Self
     type PlanarType: Planar<PackedType = Self::PackedType>;
     type PlanarTypeHandle: PlanarHandle<Self::PlanarType>;
-    type GpuPlanarType: GpuPlanar<
-        PackedType = Self::PackedType,
-        PlanarType = Self::PlanarType,
-    >;
+    type GpuPlanarType: GpuPlanar<PackedType = Self::PackedType, PlanarType = Self::PlanarType>;
 }
-
 
 pub trait GpuPlanar
 where
@@ -70,8 +65,6 @@ where
     ) -> bevy::render::render_resource::BindGroupLayout;
 }
 
-
-
 pub trait GpuPlanarTexture
 where
     Self: GpuPlanar,
@@ -91,7 +84,6 @@ where
     fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>>;
 }
 
-
 // TODO: find a better name, PlanarTexture is implemented on the packed type
 pub trait PlanarTexture
 where
@@ -106,15 +98,12 @@ where
     fn get_asset_handles(&self) -> Vec<bevy::asset::Handle<bevy::image::Image>>;
 }
 
-
-
 pub trait ReflectInterleaved {
     type PackedType;
 
     fn min_binding_sizes() -> &'static [usize];
     fn ordered_field_names() -> &'static [&'static str];
 }
-
 
 pub trait Planar
 where
@@ -132,7 +121,9 @@ where
     fn set(&mut self, index: usize, value: Self::PackedType);
     fn to_interleaved(&self) -> Vec<Self::PackedType>;
 
-    fn from_interleaved(packed: Vec<Self::PackedType>) -> Self where Self: Sized;
+    fn from_interleaved(packed: Vec<Self::PackedType>) -> Self
+    where
+        Self: Sized;
 
     fn subset(&self, indices: &[usize]) -> Self;
 }
