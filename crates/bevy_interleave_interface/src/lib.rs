@@ -9,7 +9,7 @@ where
     Self: bevy::reflect::FromReflect,
     Self: bevy::reflect::GetTypeRegistration,
     Self: bevy::reflect::Reflect,
-    Self: bevy::render::sync_component::SyncComponent,
+    Self: bevy::render::sync_component::SyncComponent<bevy::render::RenderApp>,
     T: bevy::asset::Asset,
 {
     fn handle(&self) -> &bevy::asset::Handle<T>;
