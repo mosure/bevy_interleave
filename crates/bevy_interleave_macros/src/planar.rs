@@ -66,7 +66,7 @@ pub fn generate_planar_struct(input: &DeriveInput) -> Result<quote::__private::T
             }
         }
 
-        impl bevy::render::sync_component::SyncComponent for #planar_handle_name {
+        impl bevy::render::sync_component::SyncComponent<bevy::render::RenderApp> for #planar_handle_name {
             type Target = Self;
         }
     };

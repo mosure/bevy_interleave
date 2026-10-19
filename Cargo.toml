@@ -33,16 +33,16 @@ bevy_interleave_interface = { path = "crates/bevy_interleave_interface", version
 bevy_interleave_macros = { path = "crates/bevy_interleave_macros", version = "0.10.0" }
 bytemuck = "1.24"
 serde = "1.0"
-wgpu = "29"
+wgpu = "30"
 
 [dependencies.bevy]
-version = "0.19"
+version = "0.20"
 default-features = false
 features = ["bevy_asset", "bevy_render", "png", "reflect_documentation", "reflect_functions"]
 
 
 [dev-dependencies.bevy]
-version = "0.19"
+version = "0.20"
 default-features = false
 features = [
   "bevy_asset",
